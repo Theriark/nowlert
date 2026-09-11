@@ -86,3 +86,12 @@ def test_routes_normal_flow_is_catalogue_only_after_compatibility_projection():
     assert "legacyTablePanel.remove();" in routing
     assert "routingV2LegacyRenderRoutes();" not in routing
     assert "renderRouteCapabilityCatalogue();" in routing
+
+
+def test_session_restore_survives_routing_v2_retiring_legacy_add_button():
+    app = (ROOT / "src/webui/app.js").read_text(encoding="utf-8")
+    show_app = app[app.index("function showApp(session)") : app.index("async function restoreSession()")]
+
+    assert 'const addRouteButton = byId("add-route-button");' in show_app
+    assert "if (addRouteButton) addRouteButton.hidden = !isAdmin();" in show_app
+    assert 'byId("add-route-button").hidden = !isAdmin();' not in show_app

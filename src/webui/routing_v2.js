@@ -236,9 +236,9 @@ function routingV2RetireLegacyTable() {
 }
 
 renderRoutes = function renderRoutesWithCapabilityCatalogue() {
+  routingV2DisableLegacyCreation();
   renderRouteCapabilityCatalogue();
 };
 
-routingV2DisableLegacyCreation();
 routingV2RetireLegacyTable();
 document.addEventListener("click", routingV2HandleClick);

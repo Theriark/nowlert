@@ -89,9 +89,7 @@ def test_routes_normal_flow_is_catalogue_only_after_compatibility_projection():
 
 
 def test_session_restore_survives_routing_v2_retiring_legacy_add_button():
-    app = (ROOT / "src/webui/app.js").read_text(encoding="utf-8")
-    show_app = app[app.index("function showApp(session)") : app.index("async function restoreSession()")]
+    routing = (ROOT / "src/webui/routing_v2.js").read_text(encoding="utf-8")
 
-    assert 'const addRouteButton = byId("add-route-button");' in show_app
-    assert "if (addRouteButton) addRouteButton.hidden = !isAdmin();" in show_app
-    assert 'byId("add-route-button").hidden = !isAdmin();' not in show_app
+    assert "renderRoutes = function renderRoutesWithCapabilityCatalogue() {\n  routingV2DisableLegacyCreation();\n  renderRouteCapabilityCatalogue();\n};" in routing
+    assert "\nroutingV2DisableLegacyCreation();\nroutingV2RetireLegacyTable();" not in routing

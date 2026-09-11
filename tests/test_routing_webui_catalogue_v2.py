@@ -86,3 +86,10 @@ def test_routes_normal_flow_is_catalogue_only_after_compatibility_projection():
     assert "legacyTablePanel.remove();" in routing
     assert "routingV2LegacyRenderRoutes();" not in routing
     assert "renderRouteCapabilityCatalogue();" in routing
+
+
+def test_session_restore_survives_routing_v2_retiring_legacy_add_button():
+    routing = (ROOT / "src/webui/routing_v2.js").read_text(encoding="utf-8")
+
+    assert "renderRoutes = function renderRoutesWithCapabilityCatalogue() {\n  routingV2DisableLegacyCreation();\n  renderRouteCapabilityCatalogue();\n};" in routing
+    assert "\nroutingV2DisableLegacyCreation();\nroutingV2RetireLegacyTable();" not in routing

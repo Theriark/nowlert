@@ -23,7 +23,8 @@ EXPECTED_REPOSITORY = "Theriark/nowlert-ce"
 EDITION = "ce"
 PREFIX = "nowlert-ce"
 IMAGE_PREFIX = f"ghcr.io/theriark/{PREFIX}@sha256:"
-VALID_ENVIRONMENTS = {"stage", "production-reference"}
+STAGE_APPLICATION_ID = "x9zOew6dmrn-jmcnFbllk"
+VALID_ENVIRONMENTS = {"stage"}
 
 
 def fail(message: str) -> None:
@@ -306,6 +307,13 @@ def build_release(args: argparse.Namespace) -> tuple[str, dict[str, Any]]:
     validate_image(str(manifest.get("final_image", "")))
     validate_source_commit(str(manifest.get("source_commit", "")))
 
+    stage_application_id = str(manifest.get("stage_application_id", ""))
+    if stage_application_id != STAGE_APPLICATION_ID:
+        fail(
+            "Release manifest Stage application ID does not match the approved "
+            f"application {STAGE_APPLICATION_ID}"
+        )
+
     key = f"{PREFIX}/releases/{version}.json"
     payload = {
         "schema_version": 1,
@@ -316,10 +324,7 @@ def build_release(args: argparse.Namespace) -> tuple[str, dict[str, Any]]:
         "final_image": manifest["final_image"],
         "development_run": str(manifest.get("development_run", "")),
         "stage_promotion_run": str(manifest.get("stage_promotion_run", "")),
-        "production_reference_run": str(manifest.get("production_reference_run", "")),
-        "production_reference_application_id": manifest.get(
-            "production_reference_application_id", ""
-        ),
+        "stage_application_id": stage_application_id,
         "qa_evidence": manifest.get("qa_evidence", {}),
         "release_manifest": manifest,
         "workflow": workflow_metadata(),

@@ -106,6 +106,20 @@ def test_v314_release_safety_contract():
     assert "cannot fast-forward" in stage
 
 
+def test_v314_documentation_validator_tracks_current_release():
+    validator = (
+        ROOT / "tools" / "validate_current_documentation.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'ROOT / "docs" / "releases" / "v3.1.4.md"' in validator
+    assert 'ROOT / "docs" / "v3.1.4-qa-checklist.md"' in validator
+    assert "stable-v3.1.4-F4C542" in validator
+    assert 'VERSION = "3.1.4"' in validator
+    assert 'version="v3.1.4"' in validator
+    assert 'tag="v3.1.4"' in validator
+    assert "promote-production-reference.yml" not in validator
+
+
 def test_v314_deployment_docs_contain_stage_final_promotion_chain():
     deployment = (ROOT / "docs" / "deployment.md").read_text(encoding="utf-8")
     release = (ROOT / "docs" / "releases" / "v3.1.4.md").read_text(

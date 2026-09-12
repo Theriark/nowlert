@@ -37,6 +37,8 @@ def test_environment_branch_and_immutable_promotion_contract():
 
     assert not (ROOT / ".github" / "workflows" / "promote-production-reference.yml").exists()
 
+    assert "environment: stage" in finalization
+    assert "contents: write" in finalization
     assert "refs/heads/main" in finalization
     assert "refs/remotes/origin/main" in finalization
     assert "refs/remotes/origin/stage" in finalization
@@ -44,6 +46,8 @@ def test_environment_branch_and_immutable_promotion_contract():
     assert "does not match Stage-approved source" in finalization
     assert "production_reference_run_id" not in finalization
     assert "CE_PRODREF_APPLICATION_ID" not in finalization
+    assert "CE_RELEASE_TOKEN" not in finalization
+    assert "GH_TOKEN: ${{ github.token }}" in finalization
 
     assert "docker/build-push-action" not in release
     assert "skopeo copy --all --preserve-digests" in release

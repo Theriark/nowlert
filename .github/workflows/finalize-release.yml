@@ -30,7 +30,7 @@ on:
 
 permissions:
   actions: read
-  contents: read
+  contents: write
   id-token: write
 
 concurrency:
@@ -157,26 +157,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Verify protected release publication credential
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.CE_RELEASE_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          [[ -n "${GH_TOKEN}" ]] || {
-            echo "::error::stage secret CE_RELEASE_TOKEN is missing"
-            exit 1
-          }
-
-          resolved_repository="$(
-            gh api "repos/${GITHUB_REPOSITORY}" --jq '.full_name'
-          )"
-          [[ "${resolved_repository,,}" == "${GITHUB_REPOSITORY,,}" ]] || {
-            echo "::error::CE_RELEASE_TOKEN cannot access ${GITHUB_REPOSITORY}"
-            exit 1
-          }
-
       - name: Verify live CE Stage digest
         shell: bash
         run: |
@@ -227,7 +207,7 @@ jobs:
         id: publish
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.CE_RELEASE_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -Eeuo pipefail
 
@@ -273,7 +253,7 @@ jobs:
               -f 'tagger[email]=41898282+github-actions[bot]@users.noreply.github.com' \
               --jq '.sha'
           )" || {
-            echo "::error::CE_RELEASE_TOKEN must have Contents: write and Workflows: write for this repository"
+            echo "::error::GITHUB_TOKEN could not create the annotated release tag"
             exit 1
           }
 
@@ -288,7 +268,7 @@ jobs:
             -f ref="refs/tags/${VERSION}" \
             -f sha="${tag_object_sha}" \
             >/dev/null || {
-              echo "::error::CE_RELEASE_TOKEN could not create refs/tags/${VERSION}; verify Workflows: write"
+              echo "::error::GITHUB_TOKEN could not create refs/tags/${VERSION}"
               exit 1
             }
           tag_ref_created=true

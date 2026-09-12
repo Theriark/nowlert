@@ -200,7 +200,10 @@ def wait_health(
     while time.monotonic() < deadline:
         request = urllib.request.Request(
             url,
-            headers={"accept": "application/json"},
+            headers={
+                "accept": "application/json",
+                "User-Agent": "Theriark-GitHub-Actions/1.0",
+            },
         )
         try:
             with urllib.request.urlopen(request, timeout=15) as response:

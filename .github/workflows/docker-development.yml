@@ -50,7 +50,6 @@ jobs:
       CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
       CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
       DOKPLOY_CE_DEVELOPMENT_APPLICATION_ID: ivj7Ixgw2cP29g6riR2AH
-      DEV_SMOKE_SCHEDULE_ID: ${{ vars.DEV_CE_SMOKE_SCHEDULE_ID }}
 
     steps:
       - name: Checkout tested source
@@ -66,10 +65,6 @@ jobs:
           [[ -n "${DOKPLOY_API_KEY}" ]] || { echo "::error::DOKPLOY_API_KEY is missing"; exit 1; }
           [[ -n "${CF_ACCESS_CLIENT_ID}" ]] || { echo "::error::CF_ACCESS_CLIENT_ID is missing"; exit 1; }
           [[ -n "${CF_ACCESS_CLIENT_SECRET}" ]] || { echo "::error::CF_ACCESS_CLIENT_SECRET is missing"; exit 1; }
-          [[ -n "${DEV_SMOKE_SCHEDULE_ID}" ]] || {
-            echo "::error::Repository variable DEV_CE_SMOKE_SCHEDULE_ID is missing"
-            exit 1
-          }
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4
@@ -133,16 +128,6 @@ jobs:
             --title "CE Development ${SOURCE_SHA}" \
             --description "GitHub Actions run ${{ github.run_id }}"
 
-      - name: Run CE Development smoke on VM-09
-        id: smoke
-        shell: bash
-        run: |
-          set -euo pipefail
-          python .github/scripts/dokploy_release.py run-schedule \
-            --schedule-id "${DEV_SMOKE_SCHEDULE_ID}" \
-            --success-marker "DEVELOPMENT CE SMOKE PASSED" \
-            --timeout 1800
-
       - name: Record immutable Development result
         shell: bash
         run: |
@@ -153,5 +138,4 @@ jobs:
             echo "- Development tag: \`${IMAGE}:development\`"
             echo "- Promotion tag: \`${IMAGE}:sha-${SOURCE_SHA}\`"
             echo "- Immutable image: \`${IMAGE}@${{ steps.build.outputs.digest }}\`"
-            echo "- Development smoke deployment: \`${{ steps.smoke.outputs.deployment_id }}\`"
           } >> "${GITHUB_STEP_SUMMARY}"

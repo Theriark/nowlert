@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Theriark/nowlert-ce/releases"><img src="https://img.shields.io/badge/stable-v3.1.3-F4C542" alt="Stable release v3.1.3"></a>
+  <a href="https://github.com/Theriark/nowlert-ce/releases"><img src="https://img.shields.io/badge/stable-v3.1.4-F4C542" alt="Stable release v3.1.4"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.13-blue" alt="Python 3.13"></a>
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker ready">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license">
@@ -67,7 +67,7 @@ docker logs -f nowlert-ce
 The default production image is:
 
 ```text
-theriark/nowlert-ce:3.1.3
+theriark/nowlert-ce:3.1.4
 ```
 
 ## 3. Create the first administrator
@@ -85,38 +85,37 @@ There is no default password.
 | Property | Value |
 |---|---|
 | **Status** | Stable · Production Ready |
-| **Current Stable Release** | **v3.1.3** |
+| **Current Stable Release** | **v3.1.4** |
 | **License** | MIT |
 | **Python** | 3.13 |
 | **Database schema** | 9 |
 | **Configuration model** | `platform_database_v1` |
 | **State path** | `/nowlert/state` |
 
-## What changed in v3.1.3
+## What changed in v3.1.4
 
-v3.1.3 is a documentation and discoverability patch release. It keeps schema 9,
+v3.1.4 is a release-engineering maintenance patch. It keeps schema 9,
 preserves the existing runtime contracts, and does not require a database
-migration from v3.1.2.
+migration from v3.1.3.
 
 Highlights:
 
-- adds practical Xen Orchestra → Discord and Xen Orchestra → Microsoft Teams
-  guides;
-- adds a direct homelab SMTP-ingestion guide without mailbox forwarding rules;
-- adds Dell iDRAC Redfish and Zabbix HTTP/Event API routing guides;
-- adds dedicated `docs/guides/` and `docs/integrations/` navigation indexes;
-- keeps existing integration-document paths intact; and
-- preserves the build-once immutable Development → Stage → Production Reference
-  release model without rebuild.
+- makes Stage the final live runtime acceptance gate for Community Edition;
+- simplifies the active release chain to Development → Stage → main → Release;
+- keeps the build-once immutable image model with no rebuild during promotion;
+- fast-forwards `main` only to the exact Stage-approved source commit;
+- verifies Development and Stage evidence, live Stage state, and the release
+  ledger before tag/release creation; and
+- publishes stable GHCR/Docker Hub aliases by copying the approved digest.
 
-See [v3.1.3 release notes](docs/releases/v3.1.3.md) and the
-[v3.1.3 QA checklist](docs/v3.1.3-qa-checklist.md).
+See [v3.1.4 release notes](docs/releases/v3.1.4.md) and the
+[v3.1.4 QA checklist](docs/v3.1.4-qa-checklist.md).
 
 ---
 
 # 📸 Preview
 
-v3.1.3 keeps the approved v3.1.0 visual design, so the existing screenshot set
+v3.1.4 keeps the approved v3.1.0 visual design, so the existing screenshot set
 remains the current visual baseline. New screenshots are added only when the
 rendered UI or notification presentation materially changes.
 
@@ -431,16 +430,17 @@ WebUI <-> /api/v2 <-> SQLite + owner-scoped secret files
 
 ## Build once, promote the same image
 
-A Development build produces an immutable GHCR digest. Stage, Production
-Reference, and stable release workflows reuse that digest; they do not rebuild
-from a branch or release tag.
+A Development build produces an immutable GHCR digest. Stage deploys that exact
+digest without rebuild and is the final live runtime acceptance gate. Release
+finalization and stable registry publication reuse the same approved digest;
+they do not rebuild from a branch or release tag.
 
 ## Branches represent approved source state
 
 - `development` is cumulative active work;
-- `stage` is the source commit approved by the Stage promotion gate;
-- `main` is fast-forwarded to that same Stage-approved commit before Production
-  Reference and release finalization.
+- `stage` is the source commit approved by the Stage promotion gate; and
+- `main` is fast-forwarded to that same Stage-approved commit before release
+  finalization.
 
 ## Configuration is split by responsibility
 
@@ -489,7 +489,7 @@ transport security, state location, and WebUI publication settings.
 
 Do **not** recreate legacy WebUI-managed YAML sections such as `outputs`,
 `routing`, `api.tokens`, `notifications`, `presentation`, `home_assistant`,
-`redfish`, `platform.backups`, or `webui.language` in a fresh v3.1.3
+`redfish`, `platform.backups`, or `webui.language` in a fresh v3.1.4
 configuration.
 
 See [Current configuration model](docs/current-configuration-model.md).
@@ -616,18 +616,14 @@ stage branch == approved source SHA
    v
 main == stage == approved source SHA
    |
-   | Promote CE to Production Reference (no rebuild)
-   v
-Production Reference exact digest
-   |
    | release/finalization gates
    v
 version tag + stable aliases for the same digest
 ```
 
-The promotion workflows reject a source SHA that does not match the expected
-environment branch or desired-state ledger. Stable registry aliases are
-created from the already-approved immutable image; they do not rebuild the
+The promotion and release workflows reject a source SHA that does not match the
+expected environment branch or desired-state ledger. Stable registry aliases
+are created from the already-approved immutable image; they do not rebuild the
 application from the release tag.
 
 Operational workflow details are in [Deployment](docs/deployment.md).

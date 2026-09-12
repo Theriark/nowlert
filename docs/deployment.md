@@ -85,7 +85,7 @@ Before an upgrade, keep a matched backup of:
 - the deployment definition; and
 - the currently running image reference/digest.
 
-v3.1.3 keeps schema 9, so upgrading from v3.1.2 does not require a database
+v3.1.4 keeps schema 9, so upgrading from v3.1.3 does not require a database
 migration. A matched backup is still required for safe rollback after state has
 changed.
 
@@ -154,7 +154,7 @@ gh workflow run promote-stage.yml \
   --ref development \
   -f ce_image="$FINAL_IMAGE" \
   -f source_commit="$SOURCE_COMMIT" \
-  -f change_reference="v3.1.3"
+  -f change_reference="v3.1.4"
 ```
 
 After success, record:
@@ -208,18 +208,18 @@ and validates the successful Development and Stage workflow evidence.
 Inputs include the source commit, final immutable image, Development run ID,
 Stage promotion run ID, and human-readable release notes.
 
-Example for v3.1.3:
+Example for v3.1.4:
 
 ```bash
 gh workflow run finalize-release.yml \
   --repo Theriark/nowlert-ce \
   --ref main \
-  -f version="v3.1.3" \
+  -f version="v3.1.4" \
   -f final_image="$FINAL_IMAGE" \
   -f source_commit="$SOURCE_COMMIT" \
   -f development_run_id="$DEVELOPMENT_RUN_ID" \
   -f stage_promotion_run_id="$STAGE_PROMOTION_RUN_ID" \
-  -f release_notes="Nowlert CE v3.1.3 documentation and discoverability update"
+  -f release_notes="Nowlert CE v3.1.4 Stage-final release engineering update"
 ```
 
 The workflow refuses an existing tag/release, verifies current `main` matches
@@ -235,16 +235,16 @@ After the release tag exists, run **Docker Release Aliases** from `main`:
 gh workflow run docker-release.yml \
   --repo Theriark/nowlert-ce \
   --ref main \
-  -f tag="v3.1.3" \
+  -f tag="v3.1.4" \
   -f final_image="$FINAL_IMAGE"
 ```
 
 This workflow uses registry-copy tooling to publish:
 
 ```text
-ghcr.io/theriark/nowlert-ce:3.1.3
+ghcr.io/theriark/nowlert-ce:3.1.4
 ghcr.io/theriark/nowlert-ce:latest
-docker.io/theriark/nowlert-ce:3.1.3
+docker.io/theriark/nowlert-ce:3.1.4
 docker.io/theriark/nowlert-ce:latest
 ```
 

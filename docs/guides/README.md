@@ -14,7 +14,7 @@ rather than for historical release compatibility.
 
 ## Current platform assumptions
 
-These guides are part of the v3.1.3 documentation candidate and use the current
+These guides are part of the v3.1.4 documentation candidate and use the current
 v3.1.x platform model:
 
 - integrations are built into the image;

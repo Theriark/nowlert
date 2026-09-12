@@ -16,7 +16,6 @@ def test_environment_branch_and_immutable_promotion_contract():
     ci = workflow("ci.yml")
     development = workflow("docker-development.yml")
     stage = workflow("promote-stage.yml")
-    production = workflow("promote-production-reference.yml")
     finalization = workflow("finalize-release.yml")
     release = workflow("docker-release.yml")
 
@@ -36,14 +35,15 @@ def test_environment_branch_and_immutable_promotion_contract():
     assert "Waiting for stage ref propagation" in stage
     assert "cannot fast-forward" in stage
 
-    assert "refs/heads/main" in production
-    assert "refs/remotes/origin/main" in production
-    assert "refs/remotes/origin/stage" in production
-    assert "does not match Stage-approved source" in production
+    assert not (ROOT / ".github" / "workflows" / "promote-production-reference.yml").exists()
 
     assert "refs/heads/main" in finalization
     assert "refs/remotes/origin/main" in finalization
+    assert "refs/remotes/origin/stage" in finalization
     assert "is not current main" in finalization
+    assert "does not match Stage-approved source" in finalization
+    assert "production_reference_run_id" not in finalization
+    assert "CE_PRODREF_APPLICATION_ID" not in finalization
 
     assert "docker/build-push-action" not in release
     assert "skopeo copy --all --preserve-digests" in release

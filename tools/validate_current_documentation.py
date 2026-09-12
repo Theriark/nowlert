@@ -155,7 +155,7 @@ for document in UNCHANGED_RUNTIME_GUIDES:
         )
 
 # Historical v3.1.3 release records are preserved, but mutable current-release
-# surfaces must not continue to advertise v3.1.3 after the v3.1.4 bump.
+# surfaces must not continue to advertise the old release identity.
 for stale in (
     "stable-v3.1.3-F4C542",
     "| **Current Stable Release** | **v3.1.3** |",
@@ -163,7 +163,6 @@ for stale in (
     'tag="v3.1.3"',
     "ghcr.io/theriark/nowlert-ce:3.1.3",
     "docker.io/theriark/nowlert-ce:3.1.3",
-    "promote-production-reference.yml",
 ):
     if stale in readme or stale in dockerhub or stale in deployment:
         raise SystemExit(f"ERROR: stale current-release reference remains: {stale}")

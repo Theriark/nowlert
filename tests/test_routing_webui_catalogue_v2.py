@@ -49,7 +49,8 @@ def test_routes_page_retires_legacy_route_creation_from_normal_flow():
     assert '<tbody id="route-table">' in index
     assert "routingV2DisableLegacyCreation" in routing
     assert 'byId("add-route-button")' in routing
-    assert "addRouteButton.remove();" in routing
+    assert "addRouteButton.hidden = true;" in routing
+    assert "addRouteButton.remove();" not in routing
 
 
 def test_capability_assignments_can_be_enabled_disabled_and_removed():
@@ -91,5 +92,10 @@ def test_routes_normal_flow_is_catalogue_only_after_compatibility_projection():
 def test_session_restore_survives_routing_v2_retiring_legacy_add_button():
     routing = (ROOT / "src/webui/routing_v2.js").read_text(encoding="utf-8")
 
-    assert "renderRoutes = function renderRoutesWithCapabilityCatalogue() {\n  routingV2DisableLegacyCreation();\n  renderRouteCapabilityCatalogue();\n};" in routing
-    assert "\nroutingV2DisableLegacyCreation();\nroutingV2RetireLegacyTable();" not in routing
+    assert "const routingV2ShowApp = showApp;" in routing
+    assert "showApp = function showAppWithRoutingV2(session) {" in routing
+    assert "const result = routingV2ShowApp(session);" in routing
+    assert "routingV2DisableLegacyCreation();\n  return result;" in routing
+    assert "\nroutingV2DisableLegacyCreation();\nroutingV2RetireLegacyTable();" in routing
+    assert "addRouteButton.hidden = true;" in routing
+    assert "addRouteButton.remove();" not in routing

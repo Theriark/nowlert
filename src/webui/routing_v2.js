@@ -1,6 +1,7 @@
 "use strict";
 
 const routingV2LegacyRenderRoutes = renderRoutes;
+const routingV2ShowApp = showApp;
 
 function routingV2CanManageAssignment(assignment) {
   const route = (state.routes || []).find((item) => item.id === assignment.route_id);
@@ -226,7 +227,7 @@ async function routingV2HandleClick(event) {
 
 function routingV2DisableLegacyCreation() {
   const addRouteButton = byId("add-route-button");
-  if (addRouteButton) addRouteButton.remove();
+  if (addRouteButton) addRouteButton.hidden = true;
 }
 
 function routingV2RetireLegacyTable() {
@@ -235,10 +236,17 @@ function routingV2RetireLegacyTable() {
   if (legacyTablePanel) legacyTablePanel.remove();
 }
 
+showApp = function showAppWithRoutingV2(session) {
+  const result = routingV2ShowApp(session);
+  routingV2DisableLegacyCreation();
+  return result;
+};
+
 renderRoutes = function renderRoutesWithCapabilityCatalogue() {
   routingV2DisableLegacyCreation();
   renderRouteCapabilityCatalogue();
 };
 
+routingV2DisableLegacyCreation();
 routingV2RetireLegacyTable();
 document.addEventListener("click", routingV2HandleClick);

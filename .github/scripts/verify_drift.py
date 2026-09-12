@@ -30,7 +30,7 @@ RUN_PATTERN = re.compile(r"^[0-9]+$")
 
 ENVIRONMENTS = {
     "stage": {
-        "application_id": "D0aI55MKe3G77LFdQcPdY",
+        "application_id": "x9zOew6dmrn-jmcnFbllk",
     },
     "production-reference": {
         "application_id": "-Qb71PLUZmBHLJ_Iv68Oo",

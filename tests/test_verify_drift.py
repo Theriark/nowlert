@@ -22,9 +22,13 @@ def valid_record(environment: str, application_id: str) -> dict[str, object]:
         "application_id": application_id,
         "image": "ghcr.io/theriark/nowlert-ce@sha256:" + "a" * 64,
         "source_commit": "b" * 40,
-        "promotion_run": "30776030212",
-        "approved_at": "2026-08-03T00:00:00+00:00",
+        "promotion_run": "34720678064",
+        "approved_at": "2026-09-12T21:42:00+00:00",
     }
+
+
+def test_active_drift_environment_is_stage_only() -> None:
+    assert set(verify_drift.ENVIRONMENTS) == {"stage"}
 
 
 def test_stage_targets_migrated_dokploy_application() -> None:
@@ -49,15 +53,13 @@ def test_validate_stage_record_returns_immutable_image() -> None:
 
 
 def test_validate_record_rejects_wrong_application() -> None:
-    application_id = verify_drift.ENVIRONMENTS["production-reference"][
-        "application_id"
-    ]
-    record = valid_record("production-reference", "wrong-application")
+    application_id = verify_drift.ENVIRONMENTS["stage"]["application_id"]
+    record = valid_record("stage", "wrong-application")
 
     with pytest.raises(verify_drift.DriftError, match="application_id"):
         verify_drift.validate_record(
             record,
-            environment="production-reference",
+            environment="stage",
             application_id=application_id,
         )
 

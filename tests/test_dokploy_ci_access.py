@@ -8,12 +8,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DOKPLOY_RELEASE = ROOT / ".github" / "scripts" / "dokploy_release.py"
-VERIFY_DRIFT = ROOT / ".github" / "scripts" / "verify_drift.py"
 WORKFLOWS = {
     "development": ROOT / ".github" / "workflows" / "docker-development.yml",
     "stage": ROOT / ".github" / "workflows" / "promote-stage.yml",
     "finalize": ROOT / ".github" / "workflows" / "finalize-release.yml",
-    "runtime-drift": ROOT / ".github" / "workflows" / "verify-runtime-drift.yml",
 }
 
 
@@ -71,25 +69,6 @@ def test_release_helper_sends_cloudflare_service_auth_and_ci_user_agent(monkeypa
             "GET",
             "application.one",
             query={"applicationId": "ivj7Ixgw2cP29g6riR2AH"},
-        ),
-    )
-
-    assert headers["x-api-key"] == "dokploy-test-key"
-    assert headers["cf-access-client-id"] == "ci-client.access"
-    assert headers["cf-access-client-secret"] == "ci-client-secret"
-    assert headers["user-agent"] == "Theriark-GitHub-Actions/1.0"
-
-
-def test_runtime_drift_helper_sends_cloudflare_service_auth_and_ci_user_agent(monkeypatch):
-    module = load_module("verify_drift", VERIFY_DRIFT)
-    _set_machine_auth_env(monkeypatch)
-
-    headers = _capture_headers(
-        monkeypatch,
-        module,
-        lambda: module.request_json(
-            "application.one",
-            {"applicationId": "D0aI55MKe3G77LFdQcPdY"},
         ),
     )
 

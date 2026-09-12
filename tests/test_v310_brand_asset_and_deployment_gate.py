@@ -90,9 +90,6 @@ def test_deployment_workflows_wait_for_the_source_version():
     stage = (
         ROOT / ".github" / "workflows" / "promote-stage.yml"
     ).read_text(encoding="utf-8")
-    production_reference = (
-        ROOT / ".github" / "workflows" / "promote-production-reference.yml"
-    ).read_text(encoding="utf-8")
 
     assert 'deploy_parser.add_argument("--expected-version", default="")' in helper
     assert "expected_version=args.expected_version" in helper
@@ -102,4 +99,4 @@ def test_deployment_workflows_wait_for_the_source_version():
     assert BRAND_SHA256 in development
     assert '--expected-version "${EXPECTED_VERSION}"' in development
     assert '--expected-version "${EXPECTED_VERSION}"' in stage
-    assert '--expected-version "${EXPECTED_VERSION}"' in production_reference
+    assert not (ROOT / ".github" / "workflows" / "promote-production-reference.yml").exists()

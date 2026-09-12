@@ -32,9 +32,6 @@ ENVIRONMENTS = {
     "stage": {
         "application_id": "x9zOew6dmrn-jmcnFbllk",
     },
-    "production-reference": {
-        "application_id": "-Qb71PLUZmBHLJ_Iv68Oo",
-    },
 }
 
 

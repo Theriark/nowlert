@@ -23,34 +23,29 @@ def load_helper():
     return module
 
 
-def test_promotion_workflow_yaml_is_valid() -> None:
+def test_release_workflow_yaml_is_valid() -> None:
     for relative in (
         ".github/workflows/promote-stage.yml",
-        ".github/workflows/promote-production-reference.yml",
         ".github/workflows/finalize-release.yml",
     ):
         payload = yaml.safe_load((ROOT / relative).read_text(encoding="utf-8"))
         assert isinstance(payload, dict), relative
+
+    assert not (ROOT / ".github" / "workflows" / "promote-production-reference.yml").exists()
 
 
 def test_stage_promotion_targets_migrated_vm09_application_and_hostname() -> None:
     stage = (ROOT / ".github" / "workflows" / "promote-stage.yml").read_text(
         encoding="utf-8"
     )
-    prodref = (
-        ROOT / ".github" / "workflows" / "promote-production-reference.yml"
-    ).read_text(encoding="utf-8")
 
     assert f"CE_STAGE_APPLICATION_ID: {STAGE_APPLICATION_ID}" in stage
-    assert f"CE_STAGE_APPLICATION_ID: {STAGE_APPLICATION_ID}" in prodref
     assert STAGE_HEALTH_URL in stage
-
     assert "D0aI55MKe3G77LFdQcPdY" not in stage
-    assert "D0aI55MKe3G77LFdQcPdY" not in prodref
     assert "https://ce-stage.nowlert.theriark.com/api/health" not in stage
 
 
-def test_automatic_promotion_workflows_have_zero_active_delivery_test_paths() -> None:
+def test_automatic_stage_promotion_has_zero_active_delivery_test_paths() -> None:
     forbidden = (
         "run-schedule",
         "stage_ce_qa_schedule_id",
@@ -59,80 +54,29 @@ def test_automatic_promotion_workflows_have_zero_active_delivery_test_paths() ->
         "/api/v2",
     )
 
-    for relative in (
-        ".github/workflows/promote-stage.yml",
-        ".github/workflows/promote-production-reference.yml",
-    ):
-        content = (ROOT / relative).read_text(encoding="utf-8")
-        folded = content.casefold()
-        assert "promotion-smoke" in content
-        assert "external notification delivery during promotion: disabled" in folded
-        assert "--evidence-type silent-promotion-smoke" in content
-        for value in forbidden:
-            assert value not in folded, (relative, value)
+    content = (ROOT / ".github" / "workflows" / "promote-stage.yml").read_text(
+        encoding="utf-8"
+    )
+    folded = content.casefold()
+    assert "promotion-smoke" in content
+    assert "external notification delivery during promotion: disabled" in folded
+    assert "--evidence-type silent-promotion-smoke" in content
+    for value in forbidden:
+        assert value not in folded, value
 
 
-def test_full_promotion_gates_run_complete_suite_without_external_network() -> None:
-    workflows = {
-        ".github/workflows/promote-stage.yml": "STAGE CE SILENT FULL GATE PASSED",
-        ".github/workflows/promote-production-reference.yml": (
-            "PRODUCTION REFERENCE CE SILENT FULL GATE PASSED"
-        ),
-    }
-
-    for relative, marker in workflows.items():
-        content = (ROOT / relative).read_text(encoding="utf-8")
-        assert "requirements-dev.txt" in content
-        assert "env -i" in content
-        assert '"${UNSHARE_BIN}" --net' in content
-        assert "route show default" in content
-        assert "addr show scope global" in content
-        assert "PASS: promotion gate network namespace has no default route" in content
-        assert '"${PYTHON_BIN}" -m pytest -q' in content
-        assert marker in content
-
-
-def test_production_reference_rejects_unsafe_stage_promotion_evidence() -> None:
-    content = (
-        ROOT / ".github" / "workflows" / "promote-production-reference.yml"
-    ).read_text(encoding="utf-8")
-
-    for required in (
-        "STAGE CE SILENT FULL GATE PASSED",
-        "STAGE CE SILENT PROMOTION SMOKE PASSED",
-        "PASS: promotion gate network namespace has no default route",
-        "PASS: notification delivery tests disabled for this promotion smoke",
-    ):
-        assert required in content
-
-    assert 'grep -Fq "${forbidden}" "${stage_log}"' in content
-
-    # The finalizer scans the complete Actions log for these runtime markers.
-    # They must therefore not appear contiguously in the ProdRef workflow source,
-    # because Actions echoes the shell source before executing it.
-    for forbidden_log_fragment in (
-        "===== DELIVERY =====",
-        "Expected deliveries:",
-        "Accepted deliveries:",
-        "Related firing run:",
-        "stage-ce-all-",
-        "stage-ce-zabbix-",
-        "stage-ce-portainer-",
-    ):
-        assert forbidden_log_fragment not in content
-
-    # Adjacent shell strings reconstruct the exact same values at runtime, so
-    # the Stage log rejection remains strict without poisoning the ProdRef log.
-    for split_guard_fragment in (
-        '"===== ""DELIVERY ====="',
-        '"Expected ""deliveries:"',
-        '"Accepted ""deliveries:"',
-        '"Related ""firing run:"',
-        '"stage-ce-""all-"',
-        '"stage-ce-""zabbix-"',
-        '"stage-ce-""portainer-"',
-    ):
-        assert split_guard_fragment in content
+def test_stage_full_gate_runs_complete_suite_without_external_network() -> None:
+    content = (ROOT / ".github" / "workflows" / "promote-stage.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "requirements-dev.txt" in content
+    assert "env -i" in content
+    assert '"${UNSHARE_BIN}" --net' in content
+    assert "route show default" in content
+    assert "addr show scope global" in content
+    assert "PASS: promotion gate network namespace has no default route" in content
+    assert '"${PYTHON_BIN}" -m pytest -q' in content
+    assert "STAGE CE SILENT FULL GATE PASSED" in content
 
 
 def test_promotion_smoke_function_is_passive_and_read_only() -> None:
@@ -167,7 +111,7 @@ def test_promotion_smoke_function_is_passive_and_read_only() -> None:
     assert '"post"' not in image_lookup
 
 
-def test_release_finalization_rejects_delivery_qa_for_new_promotion_chain() -> None:
+def test_release_finalization_requires_stage_silent_gate_only() -> None:
     finalizer = (
         ROOT / ".github" / "scripts" / "finalize_release.py"
     ).read_text(encoding="utf-8")
@@ -176,10 +120,13 @@ def test_release_finalization_rejects_delivery_qa_for_new_promotion_chain() -> N
     ).read_text(encoding="utf-8")
 
     assert "STAGE CE SILENT PROMOTION SMOKE PASSED" in finalizer
-    assert "PRODUCTION REFERENCE CE SILENT PROMOTION SMOKE PASSED" in finalizer
     assert "SILENT_PROMOTION_FORBIDDEN_LOG_FRAGMENTS" in finalizer
-    assert "qa_schedule_deployment_id" not in workflow
-    assert "Notification delivery tests during promotions: disabled" in workflow
+    assert "PRODUCTION REFERENCE CE SILENT PROMOTION SMOKE PASSED" not in finalizer
+    assert "production_reference" not in finalizer.casefold()
+    assert "production_reference_run_id" not in workflow
+    assert "CE_PRODREF_APPLICATION_ID" not in workflow
+    assert "--environment stage" in workflow
+    assert "Notification delivery tests during Stage promotion: disabled" in workflow
 
 
 def test_legacy_schedule_runner_remains_available_but_is_not_auto_promoted() -> None:
@@ -189,8 +136,5 @@ def test_legacy_schedule_runner_remains_available_but_is_not_auto_promoted() -> 
     stage = (ROOT / ".github" / "workflows" / "promote-stage.yml").read_text(
         encoding="utf-8"
     )
-    prodref = (
-        ROOT / ".github" / "workflows" / "promote-production-reference.yml"
-    ).read_text(encoding="utf-8")
     assert "run-schedule" not in stage
-    assert "run-schedule" not in prodref
+    assert not (ROOT / ".github" / "workflows" / "promote-production-reference.yml").exists()

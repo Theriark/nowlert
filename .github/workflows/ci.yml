@@ -80,7 +80,6 @@ jobs:
               ".github/workflows/docker-development.yml",
               ".github/workflows/docker-release.yml",
               ".github/workflows/promote-stage.yml",
-              ".github/workflows/promote-production-reference.yml",
               ".github/workflows/finalize-release.yml",
               ".github/workflows/verify-runtime-drift.yml",
           ):

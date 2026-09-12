@@ -98,6 +98,9 @@ def test_v313_release_safety_contract():
     assert "Release tag ${VERSION} does not match source version" in finalizer
     assert 'docs/releases/${VERSION}.md' in finalizer
     assert 'docs/${VERSION}-qa-checklist.md' in finalizer
+    assert "refs/remotes/origin/stage" in finalizer
+    assert "does not match Stage-approved source" in finalizer
+    assert "production_reference_run_id" not in finalizer
 
     assert "-F force=true" not in stage
     assert "-F force=false" in stage
@@ -105,18 +108,27 @@ def test_v313_release_safety_contract():
     assert "cannot fast-forward" in stage
 
 
-def test_v313_deployment_docs_contain_cli_promotion_chain():
+def test_v313_deployment_docs_contain_stage_final_promotion_chain():
     deployment = (ROOT / "docs" / "deployment.md").read_text(encoding="utf-8")
+    release = (ROOT / "docs" / "releases" / "v3.1.3.md").read_text(
+        encoding="utf-8"
+    )
+    checklist = (ROOT / "docs" / "v3.1.3-qa-checklist.md").read_text(
+        encoding="utf-8"
+    )
     normalized = " ".join(deployment.split()).casefold()
 
     for workflow in (
         "promote-stage.yml",
-        "promote-production-reference.yml",
         "finalize-release.yml",
         "docker-release.yml",
     ):
         assert f"gh workflow run {workflow}" in deployment
 
+    assert "promote-production-reference.yml" not in deployment
+    assert "production reference" not in release.casefold()
+    assert "production reference" not in checklist.casefold()
+    assert "development -> stage -> main -> release" in normalized
     assert 'version="v3.1.3"' in deployment
     assert 'tag="v3.1.3"' in deployment
     assert "ghcr.io/theriark/nowlert-ce:3.1.3" in deployment

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate and materialize a Nowlert release without building or deploying."""
+"""Validate and materialize a Nowlert CE release without building or deploying."""
 
 from __future__ import annotations
 
@@ -18,27 +18,16 @@ from typing import Any
 
 EXPECTED_REPOSITORY = "Theriark/nowlert-ce"
 EXPECTED_IMAGE_PREFIX = "ghcr.io/theriark/nowlert-ce@sha256:"
+STAGE_APPLICATION_ID = "x9zOew6dmrn-jmcnFbllk"
 EXPECTED_WORKFLOWS = {
     "development": "Development Image",
     "stage": "Promote CE to Stage",
-    "production_reference": "Promote CE to Production Reference",
 }
 EXPECTED_RUN_EVENTS = {
     "development": {"workflow_run", "workflow_dispatch"},
     "stage": {"workflow_dispatch"},
-    "production_reference": {"workflow_dispatch"},
 }
-STAGE_SCHEDULE_ID = "meHx1NPZfCxqASLe4RAYS"  # legacy v3.0 backfill only
-STAGE_SUCCESS_MARKER = "STAGE CE QA PASSED"  # legacy v3.0 backfill only
-PRODREF_APPLICATION_ID = "-Qb71PLUZmBHLJ_Iv68Oo"
-PRODREF_SCHEDULE_ID = "JVSEdTk4tt4vKPbG3cKFZ"  # legacy v3.0 backfill only
-PRODREF_QA_HOST = "vm-13"  # legacy v3.0 backfill only
-PRODREF_QA_ROOT = "/var/lib/nowlert-qa/evidence"  # legacy v3.0 backfill only
-PRODREF_SUCCESS_MARKER = "PRODUCTION REFERENCE CE POST-PROMOTION SMOKE PASSED"  # legacy
 STAGE_SILENT_SUCCESS_MARKER = "STAGE CE SILENT PROMOTION SMOKE PASSED"
-PRODREF_SILENT_SUCCESS_MARKER = (
-    "PRODUCTION REFERENCE CE SILENT PROMOTION SMOKE PASSED"
-)
 SILENT_DELIVERY_DISABLED_MARKER = (
     "PASS: notification delivery tests disabled for this promotion smoke"
 )
@@ -141,8 +130,13 @@ def require_absent_from_logs(logs: str, value: str, description: str, run_id: in
         fail(f"Run {run_id} unexpectedly contains {description}: {value}")
 
 
-def validate_silent_promotion_logs(logs: str, run_id: int, marker: str) -> None:
-    require_in_logs(logs, marker, "the notification-silent promotion marker", run_id)
+def validate_silent_promotion_logs(logs: str, run_id: int) -> None:
+    require_in_logs(
+        logs,
+        STAGE_SILENT_SUCCESS_MARKER,
+        "the notification-silent Stage promotion marker",
+        run_id,
+    )
     require_in_logs(
         logs,
         SILENT_DELIVERY_DISABLED_MARKER,
@@ -151,23 +145,22 @@ def validate_silent_promotion_logs(logs: str, run_id: int, marker: str) -> None:
     )
     for value in SILENT_PROMOTION_FORBIDDEN_LOG_FRAGMENTS:
         require_absent_from_logs(
-            logs, value, "notification delivery QA activity", run_id
+            logs,
+            value,
+            "notification delivery QA activity",
+            run_id,
         )
 
 
 def validate_args(args: argparse.Namespace) -> None:
     if not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?", args.version):
-        fail("Version must be a semantic version beginning with v, for example v3.0.0")
+        fail("Version must be a semantic version beginning with v, for example v3.1.3")
     if not re.fullmatch(r"[0-9a-f]{40}", args.source_commit):
         fail("Source commit must be a full 40-character lowercase SHA")
     if not re.fullmatch(
         re.escape(EXPECTED_IMAGE_PREFIX) + r"[0-9a-f]{64}", args.final_image
     ):
         fail("Final image must be an immutable nowlert-ce GHCR digest")
-    if args.qa_schedule_deployment_id and not re.fullmatch(
-        r"[A-Za-z0-9_-]+", args.qa_schedule_deployment_id
-    ):
-        fail("QA schedule deployment ID contains unexpected characters")
     if not args.release_notes.strip():
         fail("Release notes must not be empty")
 
@@ -186,36 +179,28 @@ def validate_runs(args: argparse.Namespace) -> dict[str, dict[str, Any]]:
             EXPECTED_WORKFLOWS["stage"],
             EXPECTED_RUN_EVENTS["stage"],
         ),
-        "production_reference": get_run(
-            args.repository,
-            args.production_reference_run,
-            EXPECTED_WORKFLOWS["production_reference"],
-            EXPECTED_RUN_EVENTS["production_reference"],
-        ),
     }
 
-    if runs["development"].get("head_sha") != args.source_commit:
-        fail(
-            "Development run head SHA does not match the requested source commit: "
-            f"{runs['development'].get('head_sha')} != {args.source_commit}"
-        )
+    for name in ("development", "stage"):
+        head_sha = runs[name].get("head_sha")
+        if head_sha != args.source_commit:
+            fail(
+                f"{name.title()} run head SHA does not match the requested source commit: "
+                f"{head_sha} != {args.source_commit}"
+            )
 
-    run_times = [
-        runs["development"].get("created_at"),
-        runs["stage"].get("created_at"),
-        runs["production_reference"].get("created_at"),
-    ]
-    if not all(isinstance(value, str) and value for value in run_times):
+    development_created = runs["development"].get("created_at")
+    stage_created = runs["stage"].get("created_at")
+    if not all(
+        isinstance(value, str) and value
+        for value in (development_created, stage_created)
+    ):
         fail("One or more workflow runs are missing created_at timestamps")
-    if not run_times[0] <= run_times[1] <= run_times[2]:
-        fail(
-            "Workflow run order is invalid; expected Development before Stage before "
-            "Production Reference"
-        )
+    if development_created > stage_created:
+        fail("Workflow run order is invalid; expected Development before Stage")
 
     development_logs = get_run_logs(args.repository, args.development_run)
     stage_logs = get_run_logs(args.repository, args.stage_run)
-    prodref_logs = get_run_logs(args.repository, args.production_reference_run)
 
     require_in_logs(
         development_logs,
@@ -235,61 +220,19 @@ def validate_runs(args: argparse.Namespace) -> dict[str, dict[str, Any]]:
         "the immutable image digest",
         args.stage_run,
     )
-
-    if args.qa_schedule_deployment_id:
-        # Backward-compatible validation for the immutable v3.0 ledger backfill.
-        require_in_logs(
-            stage_logs,
-            f"PASS: schedule {STAGE_SCHEDULE_ID} emitted marker: {STAGE_SUCCESS_MARKER}",
-            "the successful legacy VM-12 Stage gate confirmation",
-            args.stage_run,
-        )
-    else:
-        validate_silent_promotion_logs(
-            stage_logs, args.stage_run, STAGE_SILENT_SUCCESS_MARKER
-        )
-
     require_in_logs(
-        prodref_logs,
-        args.final_image,
-        "the immutable image digest",
-        args.production_reference_run,
+        stage_logs,
+        "STAGE CE SILENT FULL GATE PASSED",
+        "the full network-isolated Stage gate marker",
+        args.stage_run,
     )
     require_in_logs(
-        prodref_logs,
-        f"CE Stage run: {args.stage_run}",
-        "the supplied Stage promotion run reference",
-        args.production_reference_run,
+        stage_logs,
+        "PASS: promotion gate network namespace has no default route",
+        "the network-isolation marker",
+        args.stage_run,
     )
-
-    if args.qa_schedule_deployment_id:
-        require_in_logs(
-            prodref_logs,
-            f"Execution host: {PRODREF_QA_HOST}",
-            "the legacy VM-13 execution host",
-            args.production_reference_run,
-        )
-        require_in_logs(
-            prodref_logs,
-            (
-                f"Detected schedule deployment {args.qa_schedule_deployment_id} "
-                f"for {PRODREF_SCHEDULE_ID}"
-            ),
-            "the exact legacy VM-13 QA schedule deployment",
-            args.production_reference_run,
-        )
-        require_in_logs(
-            prodref_logs,
-            f"PASS: schedule {PRODREF_SCHEDULE_ID} emitted marker: {PRODREF_SUCCESS_MARKER}",
-            "the successful legacy VM-13 marker confirmation",
-            args.production_reference_run,
-        )
-    else:
-        validate_silent_promotion_logs(
-            prodref_logs,
-            args.production_reference_run,
-            PRODREF_SILENT_SUCCESS_MARKER,
-        )
+    validate_silent_promotion_logs(stage_logs, args.stage_run)
 
     return runs
 
@@ -297,38 +240,14 @@ def validate_runs(args: argparse.Namespace) -> dict[str, dict[str, Any]]:
 def write_outputs(args: argparse.Namespace, runs: dict[str, dict[str, Any]]) -> None:
     created_at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
 
-    if args.qa_schedule_deployment_id:
-        qa_evidence = {
-            "type": "legacy_schedule_promotion_chain",
-            "host": PRODREF_QA_HOST,
-            "root": PRODREF_QA_ROOT,
-            "schedule_id": PRODREF_SCHEDULE_ID,
-            "schedule_deployment_id": args.qa_schedule_deployment_id,
-            "success_marker": PRODREF_SUCCESS_MARKER,
-            "notification_delivery_tests": True,
-        }
-        evidence_summary = (
-            f"- Legacy VM-13 schedule deployment: `{args.qa_schedule_deployment_id}`\n"
-            f"- Legacy VM-13 success marker: `{PRODREF_SUCCESS_MARKER}`\n"
-        )
-    else:
-        qa_evidence = {
-            "type": "notification_silent_promotion_chain",
-            "notification_delivery_tests": False,
-            "stage": {
-                "promotion_run": str(args.stage_run),
-                "success_marker": STAGE_SILENT_SUCCESS_MARKER,
-            },
-            "production_reference": {
-                "promotion_run": str(args.production_reference_run),
-                "success_marker": PRODREF_SILENT_SUCCESS_MARKER,
-            },
-        }
-        evidence_summary = (
-            f"- Stage silent-smoke marker: `{STAGE_SILENT_SUCCESS_MARKER}`\n"
-            f"- Production Reference silent-smoke marker: `{PRODREF_SILENT_SUCCESS_MARKER}`\n"
-            "- Notification delivery tests during promotion: disabled\n"
-        )
+    qa_evidence = {
+        "type": "notification_silent_stage_final_acceptance",
+        "notification_delivery_tests": False,
+        "stage": {
+            "promotion_run": str(args.stage_run),
+            "success_marker": STAGE_SILENT_SUCCESS_MARKER,
+        },
+    }
 
     manifest = {
         "schema_version": 1,
@@ -337,9 +256,8 @@ def write_outputs(args: argparse.Namespace, runs: dict[str, dict[str, Any]]) -> 
         "source_commit": args.source_commit,
         "development_run": str(args.development_run),
         "stage_promotion_run": str(args.stage_run),
-        "production_reference_run": str(args.production_reference_run),
         "final_image": args.final_image,
-        "production_reference_application_id": PRODREF_APPLICATION_ID,
+        "stage_application_id": STAGE_APPLICATION_ID,
         "qa_evidence": qa_evidence,
         "workflow_runs": {
             key: {
@@ -360,7 +278,8 @@ def write_outputs(args: argparse.Namespace, runs: dict[str, dict[str, Any]]) -> 
         "created_at": created_at,
     }
     Path(args.manifest_path).write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
     )
 
     summary = f"""# Nowlert CE {args.version}
@@ -373,8 +292,9 @@ def write_outputs(args: argparse.Namespace, runs: dict[str, dict[str, Any]]) -> 
 - Final image: `{args.final_image}`
 - Development run: `{args.development_run}`
 - Stage promotion run: `{args.stage_run}`
-- Production Reference run: `{args.production_reference_run}`
-{evidence_summary}- Rebuild during promotion: no
+- Stage silent-smoke marker: `{STAGE_SILENT_SUCCESS_MARKER}`
+- Notification delivery tests during Stage promotion: disabled
+- Rebuild during promotion: no
 - Deployment during release finalisation: no
 """
     Path(args.summary_path).write_text(summary, encoding="utf-8")
@@ -388,12 +308,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--development-run", required=True, type=int)
     parser.add_argument("--stage-run", required=True, type=int)
-    parser.add_argument("--production-reference-run", required=True, type=int)
-    parser.add_argument(
-        "--qa-schedule-deployment-id",
-        default="",
-        help="Deprecated: legacy v3.0 schedule evidence only",
-    )
     parser.add_argument("--release-notes", required=True)
     parser.add_argument("--manifest-path", default="release-manifest.json")
     parser.add_argument("--summary-path", default="release-summary.md")

@@ -236,6 +236,42 @@ function routingV2RetireLegacyTable() {
   if (legacyTablePanel) legacyTablePanel.remove();
 }
 
+renderAll = function renderAllWithIsolatedComponents() {
+  const renderers = [
+    ["Notices", renderNotices],
+    ["Dashboard", renderDashboard],
+    ["Sources", renderSources],
+    ["Destinations", renderDestinations],
+    ["Routes", renderRoutes],
+    ["Event API tokens", renderTokens],
+    ["Delivery history", renderDeliveries],
+    ["Audit log", renderAudit],
+    ["Users", renderUsers],
+    ["Backups", renderBackups],
+    ["Backup destinations", renderBackupTargets],
+    ["Configuration", renderConfiguration],
+    ["Health checks", renderHealthChecks],
+    ["Backup settings", renderBackupSettings],
+    ["Updates", renderUpdates],
+    ["Preferences", renderPreferences],
+    ["Integration settings", renderIntegrationSettings],
+    ["Language", applyLanguage],
+  ];
+
+  for (const [component, renderer] of renderers) {
+    try {
+      renderer();
+    } catch (error) {
+      state.workspaceErrors.push({
+        component,
+        message: `WebUI rendering failed: ${error && error.message ? error.message : "Unknown error"}`,
+      });
+    }
+  }
+
+  renderWorkspaceErrors();
+};
+
 showApp = function showAppWithRoutingV2(session) {
   const result = routingV2ShowApp(session);
   routingV2DisableLegacyCreation();

@@ -38,7 +38,7 @@ jobs:
       CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
       PROMOTION_IMAGE: ${{ inputs.ce_image }}
       SOURCE_COMMIT: ${{ inputs.source_commit }}
-      CE_STAGE_APPLICATION_ID: D0aI55MKe3G77LFdQcPdY
+      CE_STAGE_APPLICATION_ID: x9zOew6dmrn-jmcnFbllk
 
     steps:
       - name: Checkout pipeline code
@@ -170,7 +170,7 @@ jobs:
           python .github/scripts/dokploy_release.py deploy \
             --application-id "${CE_STAGE_APPLICATION_ID}" \
             --image "${PROMOTION_IMAGE}" \
-            --health-url https://ce-stage.nowlert.theriark.com/api/health \
+            --health-url https://ce-stg-nowlert.theriark.dev/api/health \
             --expected-version "${EXPECTED_VERSION}" \
             --title "CE Stage promotion ${{ github.run_id }}" \
             --description "${{ inputs.change_reference }}" \
@@ -192,7 +192,7 @@ jobs:
           python .github/scripts/dokploy_release.py promotion-smoke \
             --application-id "${CE_STAGE_APPLICATION_ID}" \
             --image "${PROMOTION_IMAGE}" \
-            --health-url https://ce-stage.nowlert.theriark.com/api/health \
+            --health-url https://ce-stg-nowlert.theriark.dev/api/health \
             --expected-version "${EXPECTED_VERSION}" \
             --success-marker "STAGE CE SILENT PROMOTION SMOKE PASSED"
 
@@ -220,7 +220,7 @@ jobs:
             --promotion-run "${GITHUB_RUN_ID}" \
             --application-id "${CE_STAGE_APPLICATION_ID}" \
             --evidence-type silent-promotion-smoke \
-            --health-url https://ce-stage.nowlert.theriark.com/api/health \
+            --health-url https://ce-stg-nowlert.theriark.dev/api/health \
             --success-marker "STAGE CE SILENT PROMOTION SMOKE PASSED"
 
       - name: Advance Stage source branch
@@ -305,7 +305,7 @@ jobs:
           python .github/scripts/dokploy_release.py deploy \
             --application-id "${CE_STAGE_APPLICATION_ID}" \
             --image "${{ steps.deploy.outputs.previous_image }}" \
-            --health-url https://ce-stage.nowlert.theriark.com/api/health \
+            --health-url https://ce-stg-nowlert.theriark.dev/api/health \
             --title "Automatic CE Stage rollback ${{ github.run_id }}" \
             --description "The CE Stage promotion or silent smoke gate failed" \
             --allow-mutable \

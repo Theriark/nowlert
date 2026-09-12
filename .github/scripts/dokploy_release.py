@@ -53,9 +53,6 @@ def request_json(
     headers = {
         "accept": "application/json",
         "x-api-key": required_env("DOKPLOY_API_KEY"),
-        "CF-Access-Client-Id": required_env("CF_ACCESS_CLIENT_ID"),
-        "CF-Access-Client-Secret": required_env("CF_ACCESS_CLIENT_SECRET"),
-        "User-Agent": "Theriark-GitHub-Actions/1.0",
     }
     if payload is not None:
         data = json.dumps(payload, separators=(",", ":")).encode("utf-8")
@@ -200,10 +197,7 @@ def wait_health(
     while time.monotonic() < deadline:
         request = urllib.request.Request(
             url,
-            headers={
-                "accept": "application/json",
-                "User-Agent": "Theriark-GitHub-Actions/1.0",
-            },
+            headers={"accept": "application/json"},
         )
         try:
             with urllib.request.urlopen(request, timeout=15) as response:

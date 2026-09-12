@@ -11,6 +11,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 HELPER = ROOT / ".github" / "scripts" / "dokploy_release.py"
+STAGE_APPLICATION_ID = "x9zOew6dmrn-jmcnFbllk"
+STAGE_HEALTH_URL = "https://ce-stg-nowlert.theriark.dev/api/health"
 
 
 def load_helper():
@@ -29,6 +31,23 @@ def test_promotion_workflow_yaml_is_valid() -> None:
     ):
         payload = yaml.safe_load((ROOT / relative).read_text(encoding="utf-8"))
         assert isinstance(payload, dict), relative
+
+
+def test_stage_promotion_targets_migrated_vm09_application_and_hostname() -> None:
+    stage = (ROOT / ".github" / "workflows" / "promote-stage.yml").read_text(
+        encoding="utf-8"
+    )
+    prodref = (
+        ROOT / ".github" / "workflows" / "promote-production-reference.yml"
+    ).read_text(encoding="utf-8")
+
+    assert f"CE_STAGE_APPLICATION_ID: {STAGE_APPLICATION_ID}" in stage
+    assert f"CE_STAGE_APPLICATION_ID: {STAGE_APPLICATION_ID}" in prodref
+    assert STAGE_HEALTH_URL in stage
+
+    assert "D0aI55MKe3G77LFdQcPdY" not in stage
+    assert "D0aI55MKe3G77LFdQcPdY" not in prodref
+    assert "https://ce-stage.nowlert.theriark.com/api/health" not in stage
 
 
 def test_automatic_promotion_workflows_have_zero_active_delivery_test_paths() -> None:

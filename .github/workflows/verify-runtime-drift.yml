@@ -15,10 +15,10 @@ concurrency:
 
 jobs:
   verify:
-    name: Compare CE runtime with desired-state ledger
+    name: Compare CE Stage runtime with desired-state ledger
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment: production-reference
+    environment: stage
 
     env:
       DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
@@ -71,7 +71,7 @@ jobs:
           mask-aws-account-id: true
           unset-current-credentials: true
 
-      - name: Verify CE Stage and Production Reference runtime drift
+      - name: Verify CE Stage runtime drift
         shell: bash
         run: |
           set -euo pipefail

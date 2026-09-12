@@ -67,9 +67,10 @@ def test_development_workflow_targets_vm09_and_requires_machine_auth():
     workflow = DEVELOPMENT_WORKFLOW.read_text(encoding="utf-8")
 
     assert "DOKPLOY_CE_DEVELOPMENT_APPLICATION_ID: ivj7Ixgw2cP29g6riR2AH" in workflow
-    assert "https://ce-dev.nowlert.theriark.dev/api/health" in workflow
+    assert "https://ce-dev-nowlert.theriark.dev/api/health" in workflow
     assert "CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}" in workflow
     assert "CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" in workflow
 
     assert "LZHV0rpjSvusK9k9MGGpp" not in workflow
     assert "https://ce-dev.nowlert.theriark.com/api/health" not in workflow
+    assert "https://ce-dev.nowlert.theriark.dev/api/health" not in workflow

@@ -27,6 +27,13 @@ def valid_record(environment: str, application_id: str) -> dict[str, object]:
     }
 
 
+def test_stage_targets_migrated_dokploy_application() -> None:
+    assert (
+        verify_drift.ENVIRONMENTS["stage"]["application_id"]
+        == "x9zOew6dmrn-jmcnFbllk"
+    )
+
+
 def test_validate_stage_record_returns_immutable_image() -> None:
     application_id = verify_drift.ENVIRONMENTS["stage"]["application_id"]
     record = valid_record("stage", application_id)

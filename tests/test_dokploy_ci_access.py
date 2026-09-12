@@ -12,10 +12,6 @@ VERIFY_DRIFT = ROOT / ".github" / "scripts" / "verify_drift.py"
 WORKFLOWS = {
     "development": ROOT / ".github" / "workflows" / "docker-development.yml",
     "stage": ROOT / ".github" / "workflows" / "promote-stage.yml",
-    "production-reference": ROOT
-    / ".github"
-    / "workflows"
-    / "promote-production-reference.yml",
     "finalize": ROOT / ".github" / "workflows" / "finalize-release.yml",
     "runtime-drift": ROOT / ".github" / "workflows" / "verify-runtime-drift.yml",
 }

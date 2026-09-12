@@ -23,8 +23,6 @@ jobs:
     env:
       DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
       DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
-      CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-      CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
 
     steps:
       - name: Checkout drift-verification code
@@ -47,16 +45,6 @@ jobs:
 
           [[ -n "${DOKPLOY_API_KEY}" ]] || {
             echo "::error::DOKPLOY_API_KEY is missing"
-            exit 1
-          }
-
-          [[ -n "${CF_ACCESS_CLIENT_ID}" ]] || {
-            echo "::error::CF_ACCESS_CLIENT_ID is missing"
-            exit 1
-          }
-
-          [[ -n "${CF_ACCESS_CLIENT_SECRET}" ]] || {
-            echo "::error::CF_ACCESS_CLIENT_SECRET is missing"
             exit 1
           }
 

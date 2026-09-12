@@ -88,9 +88,6 @@ def request_json(path: str, query: dict[str, str]) -> Any:
         headers={
             "accept": "application/json",
             "x-api-key": required_env("DOKPLOY_API_KEY"),
-            "CF-Access-Client-Id": required_env("CF_ACCESS_CLIENT_ID"),
-            "CF-Access-Client-Secret": required_env("CF_ACCESS_CLIENT_SECRET"),
-            "User-Agent": "Theriark-GitHub-Actions/1.0",
         },
         method="GET",
     )
@@ -305,8 +302,6 @@ def main() -> int:
         validate_repository()
         required_env("DOKPLOY_URL")
         required_env("DOKPLOY_API_KEY")
-        required_env("CF_ACCESS_CLIENT_ID")
-        required_env("CF_ACCESS_CLIENT_SECRET")
         for environment in ENVIRONMENTS:
             try:
                 result = verify_environment(environment)

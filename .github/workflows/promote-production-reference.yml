@@ -35,8 +35,6 @@ jobs:
     env:
       DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
       DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
-      CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-      CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
       PROMOTION_IMAGE: ${{ inputs.ce_image }}
       SOURCE_COMMIT: ${{ inputs.source_commit }}
       CE_STAGE_APPLICATION_ID: D0aI55MKe3G77LFdQcPdY

@@ -14,29 +14,29 @@ Nowlert CE receives infrastructure signals over **SMTP**, **HTTP**, and
 and delivers clear operational notifications to Discord, Microsoft Teams,
 Slack, generic webhooks, MQTT, and ntfy.
 
-The current stable release is **v3.1.3**. The versioned Docker Hub image is:
+The current stable release is **v3.1.4**. The versioned Docker Hub image is:
 
 ```text
-theriark/nowlert-ce:3.1.3
+theriark/nowlert-ce:3.1.4
 ```
 
-## v3.1.3 highlights
+## v3.1.4 highlights
 
-- Five practical end-to-end operator guides covering Xen Orchestra, SMTP,
-  Dell iDRAC/Redfish, Zabbix, Discord, and Microsoft Teams
-- Stable `docs/integrations/` and `docs/guides/` navigation paths
-- Current database-authoritative WebUI examples instead of legacy YAML-managed
-  destination/routing examples
-- Database schema 9 and `platform_database_v1` remain unchanged
-- Build-once immutable Development → Stage → Production Reference release flow
-- Stable GHCR/Docker Hub aliases copied from the approved digest without rebuild
+- Stage is the final runtime acceptance gate for CE releases.
+- Release chain is Development → Stage → main → Release.
+- One immutable Development image is promoted to Stage without rebuild.
+- `main` advances only to the exact Stage-approved source commit.
+- Stable GHCR/Docker Hub aliases are copied from the approved digest without
+  rebuild.
+- Database schema 9 and `platform_database_v1` remain unchanged.
 
-v3.1.3 is a documentation/discoverability patch. No runtime behavior or
-database migration is introduced from v3.1.2.
+v3.1.4 is a release-engineering maintenance patch. Event ingestion, parsers,
+routing, destinations, authentication, backups, and WebUI behavior are unchanged
+from v3.1.3, and no database migration is required.
 
 ## Preview
 
-v3.1.3 keeps the approved v3.1.0 visual baseline.
+v3.1.4 keeps the approved v3.1.0 visual baseline.
 
 ![Nowlert Dashboard](https://raw.githubusercontent.com/Theriark/nowlert-ce/main/docs/images/v3.1.0-dashboard.png)
 
@@ -99,7 +99,7 @@ history are database-authoritative in private platform state.
 
 Do not add the legacy WebUI-managed `outputs`, `routing`, `api.tokens`,
 `notifications`, `presentation`, `home_assistant`, `redfish`,
-`platform.backups`, or `webui.language` sections to a fresh v3.1.3
+`platform.backups`, or `webui.language` sections to a fresh v3.1.4
 configuration.
 
 ## Built-in integrations
@@ -117,7 +117,7 @@ Nowlert evaluates enabled dedicated integration routes before wildcard fallback
 routes. Fallback routes run only when no dedicated route matches, and duplicate
 delivery to the same destination is suppressed.
 
-The v3.1.3 route editor behavior is unchanged from v3.1.2: host/event patterns
+The v3.1.4 route editor behavior is unchanged from v3.1.3: host/event patterns
 plus included severities and statuses are supported, and unselected
 severity/status values are implicitly excluded.
 
@@ -144,20 +144,21 @@ Before upgrading:
 
 1. back up `config`, `state`, and external `secrets` as one matched set;
 2. record the currently running image/digest;
-3. deploy the versioned v3.1.3 image;
+3. deploy the versioned v3.1.4 image;
 4. verify `/api/health`, login, routes, destinations, history, and backups; and
 5. keep the matched backup until acceptance passes.
 
-v3.1.3 keeps schema 9, so no v3.1.2 database migration is expected.
+v3.1.4 keeps schema 9, so no v3.1.3 database migration is expected.
 
 ## Immutable release provenance
 
 Theriark's CE release workflow builds the candidate on `development`, promotes
-the exact immutable digest through Stage and Production Reference, creates the
-release tag on the same `main` source commit, then copies that approved digest
-to the versioned and `latest` GHCR/Docker Hub aliases.
+the exact immutable digest to Stage, advances `main` only to the Stage-approved
+source commit, creates the release tag on that same source, then copies the
+approved digest to the versioned and `latest` GHCR/Docker Hub aliases.
 
-The stable image is **not rebuilt from the release tag**.
+Stage is the final live runtime acceptance gate. The stable image is **not
+rebuilt from the release tag**.
 
 ## Documentation
 

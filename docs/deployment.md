@@ -1,10 +1,16 @@
 # Container deployment and release flow
 
 Nowlert CE uses one source commit and one immutable image digest through its
-release chain. Development builds the image once; Stage and Production
-Reference promote that digest without rebuilding; release finalization tags the
-same source commit; stable registry aliases copy the approved digest without
-building from the tag.
+release chain. Development builds the image once; Stage is the final runtime
+acceptance gate; `main` advances only to the Stage-approved source; release
+finalization tags that same source commit; stable registry aliases copy the
+approved digest without rebuilding.
+
+The release chain is:
+
+```text
+Development -> Stage -> main -> Release
+```
 
 ## Local development checkout
 
@@ -92,10 +98,10 @@ The release branches represent approved source state:
 | Branch | Meaning |
 |---|---|
 | `development` | cumulative active work; CI builds/deploys the Development candidate |
-| `stage` | exact source commit approved by the Stage promotion gate |
-| `main` | exact Stage-approved source after explicit fast-forward; required for Production Reference/release |
+| `stage` | exact source commit approved by the final runtime acceptance gate |
+| `main` | exact Stage-approved source after explicit fast-forward; required for release |
 
-The desired invariant before Production Reference is:
+The desired invariant before release finalization is:
 
 ```text
 development SHA == stage SHA == main SHA == image source SHA
@@ -137,7 +143,8 @@ The workflow:
 6. advances the `stage` branch to the approved source SHA using a guarded
    fast-forward-only ref update with propagation-safe verification.
 
-No rebuild is performed.
+No rebuild is performed. A successful Stage promotion is the final runtime
+acceptance decision for the candidate.
 
 Example CLI:
 
@@ -158,8 +165,8 @@ STAGE_PROMOTION_RUN_ID=<successful Promote CE to Stage run id>
 
 ## Fast-forward `main`
 
-Production Reference is intentionally blocked until `main` and `stage` point to
-the same approved source commit.
+Release finalization is blocked until `main` and `stage` point to the same
+Stage-approved source commit.
 
 Verify Stage is strictly ahead/identical and fast-forward only:
 
@@ -189,54 +196,17 @@ gh api --method PATCH \
 
 Re-read both refs and require equality before continuing.
 
-## Production Reference
-
-Production Reference must be dispatched from `main`.
-
-Inputs:
-
-- `ce_image` — Stage-approved immutable image;
-- `source_commit` — source SHA; and
-- `stage_promotion_run` — successful Stage promotion run ID or URL.
-
-The workflow requires:
-
-```text
-source_commit == main == stage
-```
-
-It also verifies the exact image is currently approved in Stage, verifies the
-Stage desired-state ledger/evidence, reruns the full network-isolated gate,
-deploys the same digest to Production Reference, runs a passive live smoke, and
-records the Production Reference desired state.
-
-Example CLI:
-
-```bash
-gh workflow run promote-production-reference.yml \
-  --repo Theriark/nowlert-ce \
-  --ref main \
-  -f ce_image="$FINAL_IMAGE" \
-  -f source_commit="$SOURCE_COMMIT" \
-  -f stage_promotion_run="$STAGE_PROMOTION_RUN_ID"
-```
-
-Record the successful run ID:
-
-```text
-PRODUCTION_REFERENCE_RUN_ID=<run id>
-```
-
 ## Release finalization
 
 Release finalization runs from `main` and creates the annotated version tag and
 GitHub Release on that exact commit. It does not deploy or rebuild the image.
-The finalizer requires the requested tag to exactly match `src/version.py` and
-requires the matching release notes and QA checklist to exist on the source
-commit before it can publish anything.
+The finalizer requires `source_commit == main == stage`, verifies the requested
+tag matches `src/version.py`, requires the matching release notes and QA
+checklist, verifies the immutable image is the Stage-approved runtime image,
+and validates the successful Development and Stage workflow evidence.
 
-Inputs include the source commit, final immutable image, Development/Stage/
-Production Reference evidence run IDs, and human-readable release notes.
+Inputs include the source commit, final immutable image, Development run ID,
+Stage promotion run ID, and human-readable release notes.
 
 Example for v3.1.3:
 
@@ -249,14 +219,13 @@ gh workflow run finalize-release.yml \
   -f source_commit="$SOURCE_COMMIT" \
   -f development_run_id="$DEVELOPMENT_RUN_ID" \
   -f stage_promotion_run_id="$STAGE_PROMOTION_RUN_ID" \
-  -f production_reference_run_id="$PRODUCTION_REFERENCE_RUN_ID" \
   -f release_notes="Nowlert CE v3.1.3 documentation and discoverability update"
 ```
 
-The workflow refuses an existing tag/release, verifies current `main`, verifies
-the requested tag matches the source version, verifies the live Production
-Reference digest, validates promotion evidence, writes the release ledger
-record, creates the annotated tag/GitHub Release, and uploads release evidence.
+The workflow refuses an existing tag/release, verifies current `main` matches
+the Stage-approved source, verifies the live Stage digest and Stage ledger,
+validates promotion evidence, writes the release ledger record, creates the
+annotated tag/GitHub Release, and uploads release evidence.
 
 ## Stable production image aliases
 
@@ -279,13 +248,12 @@ docker.io/theriark/nowlert-ce:3.1.3
 docker.io/theriark/nowlert-ce:latest
 ```
 
-All aliases must resolve to the approved Production Reference digest. **No
-image rebuild is performed from the release tag.**
+All aliases must resolve to the approved Stage digest. **No image rebuild is
+performed from the release tag.**
 
 For Community Edition this stable registry publication is the production
 release boundary. There is no additional CE Dokploy `Production` deployment
-workflow after Production Reference; operators consume the released stable
-image from GHCR/Docker Hub.
+workflow; operators consume the released stable image from GHCR/Docker Hub.
 
 ## Watching workflow runs from CLI
 
@@ -314,8 +282,8 @@ gh run view "$RUN_ID" --repo Theriark/nowlert-ce --log-failed
 
 ### Before stable publication
 
-If Stage or Production Reference fails, stop the release. Do not move forward
-with the tag or stable aliases. Promotion workflows contain bounded rollback
+If Stage fails, stop the release. Do not move `main`, create the release tag, or
+publish stable aliases. The Stage promotion workflow contains bounded rollback
 handling for failed live gates where a previous image is available.
 
 ### After stable publication
@@ -342,4 +310,4 @@ Before finalization, verify all of the following describe the same candidate:
 - `CHANGELOG.md`;
 - current release notes/QA checklist;
 - screenshots; and
-- the Development/Stage/Production Reference source SHA and immutable digest.
+- the Development/Stage/main source SHA and immutable digest.

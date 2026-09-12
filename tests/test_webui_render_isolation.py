@@ -4,14 +4,14 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-APP = ROOT / "src" / "webui" / "app.js"
+ROUTING = ROOT / "src" / "webui" / "routing_v2.js"
 
 
 def test_render_all_isolates_component_failures_and_continues_rendering():
-    script = APP.read_text(encoding="utf-8")
+    script = ROUTING.read_text(encoding="utf-8")
 
-    start = script.index("function renderAll()")
-    end = script.index("\nfunction renderWorkspaceErrors()", start)
+    start = script.index("renderAll = function renderAllWithIsolatedComponents()")
+    end = script.index("\nshowApp = function showAppWithRoutingV2", start)
     render_all = script[start:end]
 
     assert "const renderers = [" in render_all

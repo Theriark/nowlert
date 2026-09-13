@@ -75,7 +75,6 @@ jobs:
               "config/config.example.yaml",
               "docker-compose.yml",
               "compose.production.yaml",
-              ".github/dependabot.yml",
               ".github/workflows/ci.yml",
               ".github/workflows/docker-development.yml",
               ".github/workflows/docker-release.yml",

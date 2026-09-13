@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       final_image:
-        description: "Production Reference-approved immutable GHCR image"
+        description: "Stage-approved immutable GHCR image"
         required: true
         type: string
 

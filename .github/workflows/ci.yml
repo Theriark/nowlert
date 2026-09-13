@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -77,7 +78,6 @@ jobs:
               "compose.production.yaml",
               ".github/workflows/ci.yml",
               ".github/workflows/docker-development.yml",
-              ".github/workflows/docker-release.yml",
               ".github/workflows/promote-stage.yml",
               ".github/workflows/finalize-release.yml",
           ):
@@ -98,3 +98,10 @@ jobs:
         run: |
           set -euo pipefail
           docker build --tag nowlert:ci .
+
+  deploy-development:
+    name: Build and deploy CE Development
+    needs: tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    uses: ./.github/workflows/docker-development.yml
+    secrets: inherit

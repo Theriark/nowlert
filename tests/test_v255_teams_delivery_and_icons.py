@@ -76,18 +76,14 @@ def notification(source: str = "nowlert") -> Notification:
 
 def _image_items(value):
     items = []
-
     if isinstance(value, dict):
         if value.get("type") == "Image":
             items.append(value)
-
         for child in value.values():
             items.extend(_image_items(child))
-
     elif isinstance(value, list):
         for child in value:
             items.extend(_image_items(child))
-
     return items
 
 
@@ -106,47 +102,23 @@ def image_urls(value):
 
 def test_generic_and_hpe_ilo_cards_use_small_public_https_icons():
     output = TeamsOutput()
-
-    for source, filename, expected_pixels in (
-        ("nowlert", "nowlert.png", 80),
-        ("hpe_ilo", "hpe-ilo.png", 64),
-    ):
-        formatter = output.source_formatters.get(
-            source,
-            output.default_formatter,
-        )
-        payload = formatter._sanitize_payload(
-            formatter.format(notification(source))
-        )
+    for source, filename, expected_pixels in (("nowlert", "nowlert.png", 80), ("hpe_ilo", "hpe-ilo.png", 64)):
+        formatter = output.source_formatters.get(source, output.default_formatter)
+        payload = formatter._sanitize_payload(formatter.format(notification(source)))
         urls = image_urls(payload)
-
         assert urls
         assert all(url.startswith("https://") for url in urls)
         assert any(url.endswith(f"/{filename}") for url in urls)
         assert "data:image/" not in json.dumps(payload)
-        assert any(
-            image.get("url", "").endswith(f"/{filename}")
-            and image.get("width") == f"{expected_pixels}px"
-            and image.get("height") == f"{expected_pixels}px"
-            for image in _image_items(payload)
-        )
+        assert any(image.get("url", "").endswith(f"/{filename}") and image.get("width") == f"{expected_pixels}px" and image.get("height") == f"{expected_pixels}px" for image in _image_items(payload))
         assert output.payload_size(payload) <= output.MAX_PAYLOAD_BYTES
 
 
 def test_platform_teams_rejects_oversized_payload_before_posting():
     client = HTTPClient()
-    adapter = TeamsPlatformAdapter(
-        http_client=client,
-        resolver=public_resolver,
-    )
+    adapter = TeamsPlatformAdapter(http_client=client, resolver=public_resolver)
     adapter.output.MAX_PAYLOAD_BYTES = 1
-
-    result = adapter.deliver(
-        destination(),
-        b"https://example.com/teams-workflow",
-        notification(),
-    )
-
+    result = adapter.deliver(destination(), b"https://example.com/teams-workflow", notification())
     assert result.success is False
     assert result.response_status is None
     assert result.error_code == "teams_payload_too_large"
@@ -156,41 +128,24 @@ def test_platform_teams_rejects_oversized_payload_before_posting():
 
 def test_legacy_teams_rejects_oversized_payload_before_posting(monkeypatch):
     calls = []
-
     class Config:
         def get(self, *keys, default=None):
             if keys[-1:] == ("webhook",):
                 return "https://example.com/teams-workflow"
             return default
-
     monkeypatch.setattr(teams_output_module, "config", Config())
-    monkeypatch.setattr(
-        teams_output_module.requests,
-        "post",
-        lambda *args, **kwargs: calls.append((args, kwargs)),
-    )
-
+    monkeypatch.setattr(teams_output_module.requests, "post", lambda *args, **kwargs: calls.append((args, kwargs)))
     output = TeamsOutput()
     output.MAX_PAYLOAD_BYTES = 1
-
     assert output.send(notification()) is False
     assert calls == []
 
 
 def test_http_202_is_accepted_but_webui_does_not_claim_delivery():
     client = HTTPClient(status_code=202)
-    adapter = TeamsPlatformAdapter(
-        http_client=client,
-        resolver=public_resolver,
-    )
-
-    result = adapter.deliver(
-        destination(),
-        b"https://example.com/teams-workflow",
-        notification(),
-    )
+    adapter = TeamsPlatformAdapter(http_client=client, resolver=public_resolver)
+    result = adapter.deliver(destination(), b"https://example.com/teams-workflow", notification())
     script = (ROOT / "src" / "webui" / "app.js").read_text(encoding="utf-8")
-
     assert result.success is True
     assert result.response_status == 202
     assert len(client.calls) == 1
@@ -201,19 +156,11 @@ def test_http_202_is_accepted_but_webui_does_not_claim_delivery():
 
 def test_release_image_pins_the_teams_icon_base_to_source_commit():
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
-    development = (
-        ROOT / ".github" / "workflows" / "docker-development.yml"
-    ).read_text(encoding="utf-8")
-    release = (
-        ROOT / ".github" / "workflows" / "docker-release.yml"
-    ).read_text(encoding="utf-8")
-
+    development = (ROOT / ".github" / "workflows" / "docker-development.yml").read_text(encoding="utf-8")
+    finalization = (ROOT / ".github" / "workflows" / "finalize-release.yml").read_text(encoding="utf-8")
     assert dockerfile.count("ARG NOWLERT_TEAMS_ICON_BASE_URL=") == 1
     assert dockerfile.count("ENV NOWLERT_TEAMS_ICON_BASE_URL=") == 1
-
     assert development.count("NOWLERT_TEAMS_ICON_BASE_URL=") == 1
     assert "${{ env.SOURCE_SHA }}/assets/icons" in development
-
-    # The approved digest is promoted unchanged after this build.
-    assert "NOWLERT_TEAMS_ICON_BASE_URL=" not in release
-    assert "docker/build-push-action" not in release
+    assert "NOWLERT_TEAMS_ICON_BASE_URL=" not in finalization
+    assert "docker/build-push-action" not in finalization

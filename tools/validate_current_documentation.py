@@ -36,9 +36,6 @@ FILES = (
     ROOT / "docs" / "webui.md",
 )
 
-# v3.1.5 intentionally does not change these runtime contracts. They continue
-# to document the v3.1.2 behavior baseline while the current release identity
-# and release-engineering documentation advance to v3.1.5.
 UNCHANGED_RUNTIME_GUIDES = (
     ROOT / "docs" / "current-configuration-model.md",
     ROOT / "docs" / "data-portability.md",
@@ -69,7 +66,6 @@ for document in FILES:
     if not document.is_file():
         missing.append(str(document.relative_to(ROOT)))
         continue
-
     text = document.read_text(encoding="utf-8")
     for raw in LINK_RE.findall(text):
         target = raw.split("#", 1)[0].strip()
@@ -107,9 +103,7 @@ version = (ROOT / "src" / "version.py").read_text(encoding="utf-8")
 environment = (ROOT / ".env.example").read_text(encoding="utf-8")
 compose = (ROOT / "compose.production.yaml").read_text(encoding="utf-8")
 guide_index = (ROOT / "docs" / "guides" / "README.md").read_text(encoding="utf-8")
-integration_index = (ROOT / "docs" / "integrations" / "README.md").read_text(
-    encoding="utf-8"
-)
+integration_index = (ROOT / "docs" / "integrations" / "README.md").read_text(encoding="utf-8")
 
 required_pairs = (
     (readme, "stable-v3.1.5-F4C542"),
@@ -121,11 +115,10 @@ required_pairs = (
     (release, "# Nowlert CE v3.1.5 release notes"),
     (checklist, "# Nowlert CE v3.1.5 QA checklist"),
     (deployment, 'version="v3.1.5"'),
-    (deployment, 'tag="v3.1.5"'),
     (deployment, "ghcr.io/theriark/nowlert-ce:3.1.5"),
     (deployment, "docker.io/theriark/nowlert-ce:3.1.5"),
     (deployment, "Development -> Stage -> main -> Release"),
-    (deployment, "docker-release.yml"),
+    (deployment, "no second Docker-alias workflow"),
     (api, "DELETE | `/api/v2/users/{id}`"),
     (api, "DELETE | `/api/v2/backups/{id}`"),
     (docs_index, "current v3.1.5 release line"),
@@ -142,25 +135,21 @@ for document, required in required_pairs:
     if required not in document:
         raise SystemExit(f"ERROR: current documentation contract missing: {required}")
 
+if "gh workflow run docker-release.yml" in deployment:
+    raise SystemExit("ERROR: obsolete standalone Docker Release Aliases step remains")
+
 for document in UNCHANGED_RUNTIME_GUIDES:
     text = document.read_text(encoding="utf-8")
     relative = document.relative_to(ROOT)
     if "Nowlert v3.1.2" not in text:
-        raise SystemExit(
-            f"ERROR: unchanged runtime guide lost v3.1.2 behavior baseline: {relative}"
-        )
+        raise SystemExit(f"ERROR: unchanged runtime guide lost v3.1.2 behavior baseline: {relative}")
     if "Nowlert v3.1.1" in text:
-        raise SystemExit(
-            f"ERROR: stale runtime guide identity remains in {relative}: Nowlert v3.1.1"
-        )
+        raise SystemExit(f"ERROR: stale runtime guide identity remains in {relative}: Nowlert v3.1.1")
 
-# Historical v3.1.4 release records are preserved, but mutable current-release
-# surfaces must not continue to advertise the old release identity.
 for stale in (
     "stable-v3.1.4-F4C542",
     "| **Current Stable Release** | **v3.1.4** |",
     'version="v3.1.4"',
-    'tag="v3.1.4"',
     "ghcr.io/theriark/nowlert-ce:3.1.4",
     "docker.io/theriark/nowlert-ce:3.1.4",
 ):
@@ -177,9 +166,7 @@ for path in (ROOT / "docs" / "guides").glob("*.md"):
     text = path.read_text(encoding="utf-8")
     for legacy in ("\noutputs:\n", "\nrouting:\n", "\napi:\n  tokens:\n"):
         if legacy in text:
-            raise SystemExit(
-                f"ERROR: legacy WebUI-managed YAML example remains in {path.relative_to(ROOT)}"
-            )
+            raise SystemExit(f"ERROR: legacy WebUI-managed YAML example remains in {path.relative_to(ROOT)}")
 
 for stale_claim in (
     "Nowlert v2.5.2 packages",

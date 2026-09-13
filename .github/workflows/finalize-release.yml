@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version, for example v3.1.3"
+        description: "Release version, for example v3.1.5"
         required: true
         type: string
       final_image:
@@ -32,6 +32,7 @@ permissions:
   actions: read
   contents: write
   id-token: write
+  packages: write
 
 concurrency:
   group: nowlert-ce-release-finalization
@@ -41,7 +42,7 @@ jobs:
   finalize:
     name: Validate and publish CE release
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     environment: stage
 
     env:
@@ -203,6 +204,75 @@ jobs:
             --source-commit "${SOURCE_COMMIT}" \
             --promotion-run "${STAGE_PROMOTION_RUN_ID}"
 
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Install registry copy tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+
+      - name: Publish stable aliases without rebuilding
+        shell: bash
+        run: |
+          set -euo pipefail
+          RELEASE_VERSION="${VERSION#v}"
+
+          skopeo copy --all --preserve-digests \
+            "docker://${FINAL_IMAGE}" \
+            "docker://ghcr.io/theriark/nowlert-ce:${RELEASE_VERSION}"
+
+          skopeo copy --all --preserve-digests \
+            "docker://${FINAL_IMAGE}" \
+            "docker://ghcr.io/theriark/nowlert-ce:latest"
+
+          skopeo copy --all --preserve-digests \
+            "docker://${FINAL_IMAGE}" \
+            "docker://docker.io/theriark/nowlert-ce:${RELEASE_VERSION}"
+
+          skopeo copy --all --preserve-digests \
+            "docker://${FINAL_IMAGE}" \
+            "docker://docker.io/theriark/nowlert-ce:latest"
+
+      - name: Verify all stable aliases use the approved digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          RELEASE_VERSION="${VERSION#v}"
+          EXPECTED_DIGEST="${FINAL_IMAGE##*@}"
+
+          for image in \
+            "ghcr.io/theriark/nowlert-ce:${RELEASE_VERSION}" \
+            "ghcr.io/theriark/nowlert-ce:latest" \
+            "docker.io/theriark/nowlert-ce:${RELEASE_VERSION}" \
+            "docker.io/theriark/nowlert-ce:latest"
+          do
+            actual="$(
+              skopeo inspect \
+                --format '{{.Digest}}' \
+                "docker://${image}"
+            )"
+
+            [[ "${actual}" == "${EXPECTED_DIGEST}" ]] || {
+              echo "::error::${image} resolved to ${actual}; expected ${EXPECTED_DIGEST}"
+              exit 1
+            }
+
+            echo "PASS: ${image} -> ${actual}"
+          done
+
       - name: Publish annotated CE tag, GitHub Release, and ledger record
         id: publish
         shell: bash
@@ -300,6 +370,7 @@ jobs:
       - name: Record successful CE release finalization
         shell: bash
         run: |
+          RELEASE_VERSION="${VERSION#v}"
           {
             echo "## CE release finalized"
             echo
@@ -308,9 +379,12 @@ jobs:
             echo "- Final image: \`${FINAL_IMAGE}\`"
             echo "- Development run: \`${DEVELOPMENT_RUN_ID}\`"
             echo "- Stage promotion run: \`${STAGE_PROMOTION_RUN_ID}\`"
+            echo "- GHCR aliases: \`${RELEASE_VERSION}\`, \`latest\`"
+            echo "- Docker Hub aliases: \`${RELEASE_VERSION}\`, \`latest\`"
             echo "- Notification delivery tests during Stage promotion: disabled"
             echo "- Ledger key: \`${{ steps.publish.outputs.key }}\`"
             echo "- Ledger version: \`${{ steps.publish.outputs.version_id }}\`"
+            echo "- Image rebuild performed: no"
             echo "- Rebuild performed: no"
             echo "- Deployment performed: no"
           } >> "${GITHUB_STEP_SUMMARY}"

@@ -16,7 +16,7 @@ on:
         required: true
         type: string
       development_run_id:
-        description: "Successful Development Image run ID"
+        description: "Successful development Continuous Integration run ID"
         required: true
         type: string
       stage_promotion_run_id:

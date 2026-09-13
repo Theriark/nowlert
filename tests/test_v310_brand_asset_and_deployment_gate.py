@@ -84,9 +84,9 @@ def test_deployment_workflows_wait_for_the_source_version():
     helper = (ROOT / ".github" / "scripts" / "dokploy_release.py").read_text(
         encoding="utf-8"
     )
-    development = (
-        ROOT / ".github" / "workflows" / "docker-development.yml"
-    ).read_text(encoding="utf-8")
+    development = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
+        encoding="utf-8"
+    )
     stage = (
         ROOT / ".github" / "workflows" / "promote-stage.yml"
     ).read_text(encoding="utf-8")

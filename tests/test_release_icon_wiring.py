@@ -46,9 +46,7 @@ def find_thumbnail_media(value):
 
 def test_official_release_build_uses_packaged_notification_icons():
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
-    development = (
-        ROOT / ".github" / "workflows" / "docker-development.yml"
-    ).read_text(encoding="utf-8")
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     finalization = (
         ROOT / ".github" / "workflows" / "finalize-release.yml"
     ).read_text(encoding="utf-8")
@@ -66,9 +64,9 @@ def test_official_release_build_uses_packaged_notification_icons():
     assert dockerfile.count("ARG NOWLERT_TEAMS_ICON_BASE_URL=") == 1
     assert dockerfile.count("ENV NOWLERT_TEAMS_ICON_BASE_URL=") == 1
 
-    # The one and only image build is the Development build.
-    assert development.count("NOWLERT_TEAMS_ICON_BASE_URL=") == 1
-    assert "${{ env.SOURCE_SHA }}/assets/icons" in development
+    # The one and only image build is the development build inside CI.
+    assert ci.count("NOWLERT_TEAMS_ICON_BASE_URL=") == 1
+    assert "${{ env.SOURCE_SHA }}/assets/icons" in ci
 
     # Release finalization only republishes the approved image digest.
     assert "NOWLERT_TEAMS_ICON_BASE_URL=" not in finalization

@@ -112,18 +112,17 @@ The runtime image is additionally pinned by immutable digest.
 
 ## Development
 
-A push to `development` runs Continuous Integration. If the CI test/build job
-passes, that same workflow automatically invokes **Development Image** for the
-exact `development` commit. Development Image builds/publishes the candidate
-and deploys the resulting immutable digest to CE Development. Manual dispatch
-of Development Image remains available for an operator re-run or recovery.
+A push to `development` runs Continuous Integration. After the CI test/build job
+passes, the same Continuous Integration workflow directly builds and publishes
+the Development candidate and deploys the resulting immutable digest to CE
+Development. There is no standalone Development Image workflow.
 
-Record from the successful Development run:
+Record from the successful development Continuous Integration run:
 
 ```text
 SOURCE_COMMIT=<40-char development SHA>
 FINAL_IMAGE=ghcr.io/theriark/nowlert-ce@sha256:<digest>
-DEVELOPMENT_RUN_ID=<run id>
+DEVELOPMENT_RUN_ID=<successful development Continuous Integration run id>
 ```
 
 Do not replace the immutable digest with a mutable tag for later promotions.
@@ -206,10 +205,10 @@ It does not deploy or rebuild the image. The finalizer requires
 `source_commit == main == stage`, verifies the requested tag matches
 `src/version.py`, requires the matching release notes and QA checklist,
 verifies the immutable image is the Stage-approved runtime image, and validates
-the successful Development and Stage workflow evidence.
+the successful development Continuous Integration and Stage promotion evidence.
 
-Inputs include the source commit, final immutable image, Development run ID,
-Stage promotion run ID, and human-readable release notes.
+Inputs include the source commit, final immutable image, development Continuous
+Integration run ID, Stage promotion run ID, and human-readable release notes.
 
 Example for v3.1.5:
 

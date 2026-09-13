@@ -220,12 +220,13 @@ def test_release_workflows_use_current_action_majors():
     assert "skopeo copy --all --preserve-digests" in finalization
 
 
-def test_development_workflow_targets_only_ce():
-    workflow = (
-        ROOT / ".github" / "workflows" / "docker-development.yml"
-    ).read_text(encoding="utf-8")
+def test_development_ci_targets_only_ce():
+    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
+        encoding="utf-8"
+    )
 
     assert "IMAGE: ghcr.io/theriark/nowlert-ce" in workflow
     assert "environment: development" in workflow
     assert "DOKPLOY_CE_DEVELOPMENT_APPLICATION_ID" in workflow
     assert "DOKPLOY_EE_DEVELOPMENT_APPLICATION_ID" not in workflow
+    assert not (ROOT / ".github" / "workflows" / "docker-development.yml").exists()

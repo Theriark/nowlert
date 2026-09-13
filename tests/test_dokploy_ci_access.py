@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOKPLOY_RELEASE = ROOT / ".github" / "scripts" / "dokploy_release.py"
 WORKFLOWS = {
-    "development": ROOT / ".github" / "workflows" / "docker-development.yml",
+    "development": ROOT / ".github" / "workflows" / "ci.yml",
     "stage": ROOT / ".github" / "workflows" / "promote-stage.yml",
     "finalize": ROOT / ".github" / "workflows" / "finalize-release.yml",
 }
@@ -89,7 +89,7 @@ def test_all_dokploy_workflows_use_shared_cloudflare_machine_auth_secrets():
         ), name
 
 
-def test_development_workflow_targets_vm09_and_flattened_hostname():
+def test_development_ci_targets_vm09_and_flattened_hostname():
     workflow = WORKFLOWS["development"].read_text(encoding="utf-8")
 
     assert "DOKPLOY_CE_DEVELOPMENT_APPLICATION_ID: ivj7Ixgw2cP29g6riR2AH" in workflow

@@ -14,25 +14,34 @@ def workflow(name):
 
 def test_environment_branch_and_immutable_promotion_contract():
     ci = workflow("ci.yml")
-    development = workflow("docker-development.yml")
     stage = workflow("promote-stage.yml")
     finalization = workflow("finalize-release.yml")
+    finalizer = (
+        ROOT / ".github" / "scripts" / "finalize_release.py"
+    ).read_text(encoding="utf-8")
 
     assert "- development" in ci
     assert "- main" in ci
 
-    # A successful push CI on development must call the Development Image
-    # workflow automatically. Manual dispatch remains available for recovery.
+    # A successful push CI on development must build, publish, and deploy the
+    # Development image directly. There is no standalone Development workflow.
     assert "needs: tests" in ci
-    assert "uses: ./.github/workflows/docker-development.yml" in ci
     assert "github.event_name == 'push'" in ci
     assert "github.ref == 'refs/heads/development'" in ci
-    assert "secrets: inherit" in ci
-    assert "workflow_call:" in development
-    assert "workflow_dispatch:" in development
-    assert "refs/heads/development" in development
-    assert "ghcr.io/theriark/nowlert-ce" in development
-    assert ":development" in development
+    assert "docker/build-push-action@v7" in ci
+    assert "ghcr.io/theriark/nowlert-ce" in ci
+    assert ":development" in ci
+    assert "environment: development" in ci
+    assert "DOKPLOY_CE_DEVELOPMENT_APPLICATION_ID" in ci
+    assert "DOKPLOY_EE_DEVELOPMENT_APPLICATION_ID" not in ci
+    assert "Development immutable image:" in ci
+    assert not (ROOT / ".github" / "workflows" / "docker-development.yml").exists()
+
+    # Finalization must validate the successful development CI push run, not a
+    # removed standalone Development Image workflow.
+    assert '"development": "Continuous Integration"' in finalizer
+    assert '"development": {"push"}' in finalizer
+    assert '"development": "Development Image"' not in finalizer
 
     assert "contents: write" in stage
     assert "refs/heads/development" in stage

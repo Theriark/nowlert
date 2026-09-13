@@ -25,15 +25,13 @@ def test_production_image_uses_nowlert_icon_argument():
 
 
 def test_development_build_supplies_nowlert_icon_argument():
-    development = (
-        ROOT / ".github" / "workflows" / "docker-development.yml"
-    ).read_text(encoding="utf-8")
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     finalization = (
         ROOT / ".github" / "workflows" / "finalize-release.yml"
     ).read_text(encoding="utf-8")
 
-    assert development.count("NOWLERT_TEAMS_ICON_BASE_URL=") == 1
-    assert "${{ env.SOURCE_SHA }}/assets/icons" in development
+    assert ci.count("NOWLERT_TEAMS_ICON_BASE_URL=") == 1
+    assert "${{ env.SOURCE_SHA }}/assets/icons" in ci
 
     # Stable aliases reuse the already-built immutable image.
     assert "NOWLERT_TEAMS_ICON_BASE_URL=" not in finalization

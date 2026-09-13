@@ -156,11 +156,11 @@ def test_http_202_is_accepted_but_webui_does_not_claim_delivery():
 
 def test_release_image_pins_the_teams_icon_base_to_source_commit():
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
-    development = (ROOT / ".github" / "workflows" / "docker-development.yml").read_text(encoding="utf-8")
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     finalization = (ROOT / ".github" / "workflows" / "finalize-release.yml").read_text(encoding="utf-8")
     assert dockerfile.count("ARG NOWLERT_TEAMS_ICON_BASE_URL=") == 1
     assert dockerfile.count("ENV NOWLERT_TEAMS_ICON_BASE_URL=") == 1
-    assert development.count("NOWLERT_TEAMS_ICON_BASE_URL=") == 1
-    assert "${{ env.SOURCE_SHA }}/assets/icons" in development
+    assert ci.count("NOWLERT_TEAMS_ICON_BASE_URL=") == 1
+    assert "${{ env.SOURCE_SHA }}/assets/icons" in ci
     assert "NOWLERT_TEAMS_ICON_BASE_URL=" not in finalization
     assert "docker/build-push-action" not in finalization

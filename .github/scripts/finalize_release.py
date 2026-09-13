@@ -20,11 +20,11 @@ EXPECTED_REPOSITORY = "Theriark/nowlert-ce"
 EXPECTED_IMAGE_PREFIX = "ghcr.io/theriark/nowlert-ce@sha256:"
 STAGE_APPLICATION_ID = "x9zOew6dmrn-jmcnFbllk"
 EXPECTED_WORKFLOWS = {
-    "development": "Development Image",
+    "development": "Continuous Integration",
     "stage": "Promote CE to Stage",
 }
 EXPECTED_RUN_EVENTS = {
-    "development": {"workflow_run", "workflow_dispatch"},
+    "development": {"push"},
     "stage": {"workflow_dispatch"},
 }
 STAGE_SILENT_SUCCESS_MARKER = "STAGE CE SILENT PROMOTION SMOKE PASSED"

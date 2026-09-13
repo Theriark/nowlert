@@ -172,9 +172,6 @@ def test_release_notes_cover_v315_compatibility_and_rollback():
 
 
 def test_release_workflow_is_guarded_and_reuses_approved_image():
-    release = (ROOT / ".github" / "workflows" / "docker-release.yml").read_text(
-        encoding="utf-8"
-    )
     finalization = (
         ROOT / ".github" / "workflows" / "finalize-release.yml"
     ).read_text(encoding="utf-8")
@@ -182,15 +179,11 @@ def test_release_workflow_is_guarded_and_reuses_approved_image():
         encoding="utf-8"
     )
 
-    assert "Verify release repository identity" in release
-    assert '${GITHUB_REPOSITORY,,}' in release
-    assert '"theriark/nowlert-ce"' in release
-
-    assert "final_image:" in release
-    assert "docker://ghcr.io/theriark/nowlert-ce:${VERSION}" in release
-    assert "docker://docker.io/theriark/nowlert-ce:${VERSION}" in release
-    assert "skopeo copy --all --preserve-digests" in release
-    assert "docker/build-push-action" not in release
+    assert "final_image:" in finalization
+    assert "skopeo copy --all --preserve-digests" in finalization
+    assert 'docker://ghcr.io/theriark/nowlert-ce:${RELEASE_VERSION}' in finalization
+    assert 'docker://docker.io/theriark/nowlert-ce:${RELEASE_VERSION}' in finalization
+    assert "docker/build-push-action" not in finalization
 
     assert '--title "Nowlert CE ${VERSION}"' in finalization
     assert 'gh release create "${VERSION}"' in finalization
@@ -206,25 +199,25 @@ def test_release_workflow_is_guarded_and_reuses_approved_image():
     assert "-F force=true" not in stage
     assert "Waiting for stage ref propagation" in stage
 
-    assert "fortpt/nowlert:" not in release
-    assert "ghcr.io/fortpt/nowlert:" not in release
+    assert "fortpt/nowlert:" not in finalization
+    assert "ghcr.io/fortpt/nowlert:" not in finalization
 
 
 def test_release_workflows_use_current_action_majors():
     ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
-    release = (ROOT / ".github" / "workflows" / "docker-release.yml").read_text(
-        encoding="utf-8"
-    )
+    finalization = (
+        ROOT / ".github" / "workflows" / "finalize-release.yml"
+    ).read_text(encoding="utf-8")
 
     assert "actions/checkout@v7" in ci
     assert "actions/setup-python@v7" in ci
     assert "actions/setup-node@v7" in ci
 
-    assert "actions/checkout@v7" in release
-    assert "docker/login-action@v4" in release
-    assert "docker/setup-buildx-action" not in release
-    assert "docker/build-push-action" not in release
-    assert "skopeo copy --all --preserve-digests" in release
+    assert "actions/checkout@v7" in finalization
+    assert "docker/login-action@v4" in finalization
+    assert "docker/setup-buildx-action" not in finalization
+    assert "docker/build-push-action" not in finalization
+    assert "skopeo copy --all --preserve-digests" in finalization
 
 
 def test_development_workflow_targets_only_ce():

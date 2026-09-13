@@ -80,7 +80,7 @@ def test_historical_v300_v310_v311_v312_v313_and_v314_documents_remain_historica
     v300_checklist = ROOT / "docs" / "v3.0.0-acceptance-checklist.md"
     v310_notes = ROOT / "docs" / "releases" / "v3.1.0.md"
     v311_notes = ROOT / "docs" / "releases" / "v3.1.1.md"
-    v311_checklist = ROOT / "docs" / "releases" / "v3.1.1-qa-checklist.md"
+    v311_checklist = ROOT / "docs" / "v3.1.1-qa-checklist.md"
     v312_notes = ROOT / "docs" / "releases" / "v3.1.2.md"
     v312_checklist = ROOT / "docs" / "v3.1.2-qa-checklist.md"
     v313_notes = ROOT / "docs" / "releases" / "v3.1.3.md"

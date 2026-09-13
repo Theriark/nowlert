@@ -49,8 +49,8 @@ def test_official_release_build_uses_packaged_notification_icons():
     development = (
         ROOT / ".github" / "workflows" / "docker-development.yml"
     ).read_text(encoding="utf-8")
-    release = (
-        ROOT / ".github" / "workflows" / "docker-release.yml"
+    finalization = (
+        ROOT / ".github" / "workflows" / "finalize-release.yml"
     ).read_text(encoding="utf-8")
     presentation = (
         ROOT / "src" / "formatters" / "presentation.py"
@@ -70,9 +70,10 @@ def test_official_release_build_uses_packaged_notification_icons():
     assert development.count("NOWLERT_TEAMS_ICON_BASE_URL=") == 1
     assert "${{ env.SOURCE_SHA }}/assets/icons" in development
 
-    # Release aliases never rebuild the approved image.
-    assert "NOWLERT_TEAMS_ICON_BASE_URL=" not in release
-    assert "docker/build-push-action" not in release
+    # Release finalization only republishes the approved image digest.
+    assert "NOWLERT_TEAMS_ICON_BASE_URL=" not in finalization
+    assert "docker/build-push-action" not in finalization
+
 
 def test_components_v2_delivery_uploads_packaged_icon(monkeypatch, tmp_path):
     icon = tmp_path / "synology.png"

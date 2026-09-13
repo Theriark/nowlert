@@ -1,4 +1,4 @@
-"""Current Nowlert CE v3.1.5 release/documentation contract."""
+"""Current Nowlert CE v3.1.6 release/documentation contract."""
 
 from pathlib import Path
 
@@ -23,25 +23,25 @@ CURRENT_GUIDES = (
 )
 
 
-def test_v315_release_identity_is_consistent():
-    assert VERSION == "3.1.5"
+def test_v316_release_identity_is_consistent():
+    assert VERSION == "3.1.6"
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     dockerhub = (ROOT / "DOCKERHUB_README.md").read_text(encoding="utf-8")
     environment = (ROOT / ".env.example").read_text(encoding="utf-8")
     compose = (ROOT / "compose.production.yaml").read_text(encoding="utf-8")
-    release = (ROOT / "docs" / "releases" / "v3.1.5.md").read_text(encoding="utf-8")
-    checklist = (ROOT / "docs" / "v3.1.5-qa-checklist.md").read_text(encoding="utf-8")
-    assert "stable-v3.1.5-F4C542" in readme
-    assert "**Current Stable Release** | **v3.1.5**" in readme
-    assert "current stable release is **v3.1.5**" in dockerhub.casefold()
-    assert "theriark/nowlert-ce:3.1.5" in dockerhub
-    assert "NOWLERT_IMAGE=theriark/nowlert-ce:3.1.5" in environment
-    assert "${NOWLERT_IMAGE:-theriark/nowlert-ce:3.1.5}" in compose
-    assert release.startswith("# Nowlert CE v3.1.5 release notes")
-    assert checklist.startswith("# Nowlert CE v3.1.5 QA checklist")
+    release = (ROOT / "docs" / "releases" / "v3.1.6.md").read_text(encoding="utf-8")
+    checklist = (ROOT / "docs" / "v3.1.6-qa-checklist.md").read_text(encoding="utf-8")
+    assert "stable-v3.1.6-F4C542" in readme
+    assert "**Current Stable Release** | **v3.1.6**" in readme
+    assert "current stable release is **v3.1.6**" in dockerhub.casefold()
+    assert "theriark/nowlert-ce:3.1.6" in dockerhub
+    assert "NOWLERT_IMAGE=theriark/nowlert-ce:3.1.6" in environment
+    assert "${NOWLERT_IMAGE:-theriark/nowlert-ce:3.1.6}" in compose
+    assert release.startswith("# Nowlert CE v3.1.6 release notes")
+    assert checklist.startswith("# Nowlert CE v3.1.6 QA checklist")
 
 
-def test_v315_approved_visual_baseline_is_packaged_and_referenced():
+def test_v316_approved_visual_baseline_is_packaged_and_referenced():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     webui = (ROOT / "docs" / "webui.md").read_text(encoding="utf-8")
     docs_index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
@@ -54,7 +54,7 @@ def test_v315_approved_visual_baseline_is_packaged_and_referenced():
     assert "does not introduce a visual redesign" in " ".join(docs_index.split())
 
 
-def test_v315_consolidated_guide_batch_is_packaged():
+def test_v316_consolidated_guide_batch_is_packaged():
     guide_index = (ROOT / "docs" / "guides" / "README.md").read_text(encoding="utf-8")
     assert (ROOT / "docs" / "integrations" / "README.md").is_file()
     for filename in CURRENT_GUIDES:
@@ -67,7 +67,7 @@ def test_v315_consolidated_guide_batch_is_packaged():
             assert forbidden not in text, filename
 
 
-def test_v315_release_safety_contract():
+def test_v316_release_safety_contract():
     finalizer = (ROOT / ".github" / "workflows" / "finalize-release.yml").read_text(encoding="utf-8")
     stage = (ROOT / ".github" / "workflows" / "promote-stage.yml").read_text(encoding="utf-8")
     assert '[[ "${VERSION}" == "v${SOURCE_VERSION}" ]]' in finalizer
@@ -85,20 +85,20 @@ def test_v315_release_safety_contract():
     assert "cannot fast-forward" in stage
 
 
-def test_v315_documentation_validator_tracks_current_release():
+def test_v316_documentation_validator_tracks_current_release():
     validator = (ROOT / "tools" / "validate_current_documentation.py").read_text(encoding="utf-8")
-    assert 'ROOT / "docs" / "releases" / "v3.1.5.md"' in validator
-    assert 'ROOT / "docs" / "v3.1.5-qa-checklist.md"' in validator
-    assert "stable-v3.1.5-F4C542" in validator
-    assert 'VERSION = "3.1.5"' in validator
-    assert 'version="v3.1.5"' in validator
+    assert 'ROOT / "docs" / "releases" / "v3.1.6.md"' in validator
+    assert 'ROOT / "docs" / "v3.1.6-qa-checklist.md"' in validator
+    assert "stable-v3.1.6-F4C542" in validator
+    assert 'VERSION = "3.1.6"' in validator
+    assert 'version="v3.1.6"' in validator
     assert "promote-production-reference.yml" not in validator
 
 
-def test_v315_deployment_docs_contain_stage_final_promotion_chain():
+def test_v316_deployment_docs_contain_stage_final_promotion_chain():
     deployment = (ROOT / "docs" / "deployment.md").read_text(encoding="utf-8")
-    release = (ROOT / "docs" / "releases" / "v3.1.5.md").read_text(encoding="utf-8")
-    checklist = (ROOT / "docs" / "v3.1.5-qa-checklist.md").read_text(encoding="utf-8")
+    release = (ROOT / "docs" / "releases" / "v3.1.6.md").read_text(encoding="utf-8")
+    checklist = (ROOT / "docs" / "v3.1.6-qa-checklist.md").read_text(encoding="utf-8")
     normalized = " ".join(deployment.split()).casefold()
     assert "gh workflow run promote-stage.yml" in deployment
     assert "gh workflow run finalize-release.yml" in deployment
@@ -107,8 +107,8 @@ def test_v315_deployment_docs_contain_stage_final_promotion_chain():
     assert "production reference" not in release.casefold()
     assert "production reference" not in checklist.casefold()
     assert "development -> stage -> main -> release" in normalized
-    assert 'version="v3.1.5"' in deployment
-    assert "ghcr.io/theriark/nowlert-ce:3.1.5" in deployment
-    assert "docker.io/theriark/nowlert-ce:3.1.5" in deployment
+    assert 'version="v3.1.6"' in deployment
+    assert "ghcr.io/theriark/nowlert-ce:3.1.6" in deployment
+    assert "docker.io/theriark/nowlert-ce:3.1.6" in deployment
     assert "no image rebuild" in normalized
     assert "there is no additional ce dokploy `production` deployment workflow" in normalized

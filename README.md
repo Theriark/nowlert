@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Theriark/nowlert-ce/releases"><img src="https://img.shields.io/badge/stable-v3.1.4-F4C542" alt="Stable release v3.1.4"></a>
+  <a href="https://github.com/Theriark/nowlert-ce/releases"><img src="https://img.shields.io/badge/stable-v3.1.5-F4C542" alt="Stable release v3.1.5"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.13-blue" alt="Python 3.13"></a>
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker ready">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license">
@@ -67,7 +67,7 @@ docker logs -f nowlert-ce
 The default production image is:
 
 ```text
-theriark/nowlert-ce:3.1.4
+theriark/nowlert-ce:3.1.5
 ```
 
 ## 3. Create the first administrator
@@ -85,37 +85,38 @@ There is no default password.
 | Property | Value |
 |---|---|
 | **Status** | Stable · Production Ready |
-| **Current Stable Release** | **v3.1.4** |
+| **Current Stable Release** | **v3.1.5** |
 | **License** | MIT |
 | **Python** | 3.13 |
 | **Database schema** | 9 |
 | **Configuration model** | `platform_database_v1` |
 | **State path** | `/nowlert/state` |
 
-## What changed in v3.1.4
+## What changed in v3.1.5
 
-v3.1.4 is a release-engineering maintenance patch. It keeps schema 9,
+v3.1.5 is a repository and release-maintenance patch. It keeps schema 9,
 preserves the existing runtime contracts, and does not require a database
-migration from v3.1.3.
+migration from v3.1.4.
 
 Highlights:
 
-- makes Stage the final live runtime acceptance gate for Community Edition;
-- simplifies the active release chain to Development → Stage → main → Release;
-- keeps the build-once immutable image model with no rebuild during promotion;
-- fast-forwards `main` only to the exact Stage-approved source commit;
-- verifies Development and Stage evidence, live Stage state, and the release
-  ledger before tag/release creation; and
-- publishes stable GHCR/Docker Hub aliases by copying the approved digest.
+- keeps Stage as the final live runtime acceptance gate;
+- keeps the release chain Development → Stage → main → Release;
+- removes obsolete CE runtime-drift automation;
+- removes Dependabot configuration that created additional repository branches;
+- keeps only `development`, `stage`, and `main` as maintained branch pointers;
+- corrects current release-policy documentation; and
+- preserves the build-once immutable image model with no rebuild during
+  promotion or release publication.
 
-See [v3.1.4 release notes](docs/releases/v3.1.4.md) and the
-[v3.1.4 QA checklist](docs/v3.1.4-qa-checklist.md).
+See [v3.1.5 release notes](docs/releases/v3.1.5.md) and the
+[v3.1.5 QA checklist](docs/v3.1.5-qa-checklist.md).
 
 ---
 
 # 📸 Preview
 
-v3.1.4 keeps the approved v3.1.0 visual design, so the existing screenshot set
+v3.1.5 keeps the approved v3.1.0 visual design, so the existing screenshot set
 remains the current visual baseline. New screenshots are added only when the
 rendered UI or notification presentation materially changes.
 
@@ -489,7 +490,7 @@ transport security, state location, and WebUI publication settings.
 
 Do **not** recreate legacy WebUI-managed YAML sections such as `outputs`,
 `routing`, `api.tokens`, `notifications`, `presentation`, `home_assistant`,
-`redfish`, `platform.backups`, or `webui.language` in a fresh v3.1.4
+`redfish`, `platform.backups`, or `webui.language` in a fresh v3.1.5
 configuration.
 
 See [Current configuration model](docs/current-configuration-model.md).

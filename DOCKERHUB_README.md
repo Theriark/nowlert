@@ -14,29 +14,32 @@ Nowlert CE receives infrastructure signals over **SMTP**, **HTTP**, and
 and delivers clear operational notifications to Discord, Microsoft Teams,
 Slack, generic webhooks, MQTT, and ntfy.
 
-The current stable release is **v3.1.4**. The versioned Docker Hub image is:
+The current stable release is **v3.1.5**. The versioned Docker Hub image is:
 
 ```text
-theriark/nowlert-ce:3.1.4
+theriark/nowlert-ce:3.1.5
 ```
 
-## v3.1.4 highlights
+## v3.1.5 highlights
 
-- Stage is the final runtime acceptance gate for CE releases.
-- Release chain is Development → Stage → main → Release.
-- One immutable Development image is promoted to Stage without rebuild.
-- `main` advances only to the exact Stage-approved source commit.
+- Stage remains the final runtime acceptance gate for CE releases.
+- Release chain remains Development → Stage → main → Release.
+- Obsolete CE runtime-drift automation has been removed.
+- Dependabot configuration that created additional repository branches has been
+  removed.
+- The maintained branch set is `development`, `stage`, and `main`.
+- Current release-policy documentation now matches the Stage-final model.
 - Stable GHCR/Docker Hub aliases are copied from the approved digest without
   rebuild.
 - Database schema 9 and `platform_database_v1` remain unchanged.
 
-v3.1.4 is a release-engineering maintenance patch. Event ingestion, parsers,
-routing, destinations, authentication, backups, and WebUI behavior are unchanged
-from v3.1.3, and no database migration is required.
+v3.1.5 is a release-maintenance patch. Event ingestion, parsers, routing,
+destinations, authentication, backups, and WebUI behavior are unchanged from
+v3.1.4, and no database migration is required.
 
 ## Preview
 
-v3.1.4 keeps the approved v3.1.0 visual baseline.
+v3.1.5 keeps the approved v3.1.0 visual baseline.
 
 ![Nowlert Dashboard](https://raw.githubusercontent.com/Theriark/nowlert-ce/main/docs/images/v3.1.0-dashboard.png)
 
@@ -99,7 +102,7 @@ history are database-authoritative in private platform state.
 
 Do not add the legacy WebUI-managed `outputs`, `routing`, `api.tokens`,
 `notifications`, `presentation`, `home_assistant`, `redfish`,
-`platform.backups`, or `webui.language` sections to a fresh v3.1.4
+`platform.backups`, or `webui.language` sections to a fresh v3.1.5
 configuration.
 
 ## Built-in integrations
@@ -117,7 +120,7 @@ Nowlert evaluates enabled dedicated integration routes before wildcard fallback
 routes. Fallback routes run only when no dedicated route matches, and duplicate
 delivery to the same destination is suppressed.
 
-The v3.1.4 route editor behavior is unchanged from v3.1.3: host/event patterns
+The v3.1.5 route editor behavior is unchanged from v3.1.4: host/event patterns
 plus included severities and statuses are supported, and unselected
 severity/status values are implicitly excluded.
 
@@ -144,11 +147,11 @@ Before upgrading:
 
 1. back up `config`, `state`, and external `secrets` as one matched set;
 2. record the currently running image/digest;
-3. deploy the versioned v3.1.4 image;
+3. deploy the versioned v3.1.5 image;
 4. verify `/api/health`, login, routes, destinations, history, and backups; and
 5. keep the matched backup until acceptance passes.
 
-v3.1.4 keeps schema 9, so no v3.1.3 database migration is expected.
+v3.1.5 keeps schema 9, so no v3.1.4 database migration is expected.
 
 ## Immutable release provenance
 

@@ -5,7 +5,7 @@ release records.
 
 ## Current documentation
 
-Use these guides for the current v3.1.4 release line:
+Use these guides for the current v3.1.5 release line:
 
 | Guide | Purpose |
 |---|---|
@@ -44,8 +44,8 @@ iDRAC/Redfish routing, and Zabbix Event API delivery to Discord.
 
 Current release material:
 
-- [v3.1.4 release notes](releases/v3.1.4.md)
-- [v3.1.4 QA checklist](v3.1.4-qa-checklist.md)
+- [v3.1.5 release notes](releases/v3.1.5.md)
+- [v3.1.5 QA checklist](v3.1.5-qa-checklist.md)
 
 Historical notes under `releases/` and historical acceptance/QA checklists are
 version snapshots. They are intentionally preserved even when a newer release
@@ -53,7 +53,7 @@ changes current documentation.
 
 ## Screenshots
 
-Current public screenshots live under `images/`. v3.1.4 does not introduce a
+Current public screenshots live under `images/`. v3.1.5 does not introduce a
 visual redesign, so it deliberately reuses the approved v3.1.0 visual baseline
 rather than duplicating identical PNGs under new filenames.
 
@@ -85,7 +85,7 @@ python -m pytest -q tests/test_comprehensive_readme.py \
   tests/test_v252_documentation_refresh.py \
   tests/test_v310_release_docs.py \
   tests/test_v311_release_docs.py \
-  tests/test_v314_release_docs.py
+  tests/test_v315_release_docs.py
 ```
 
 Documentation, release metadata, runtime version, Compose defaults, and the

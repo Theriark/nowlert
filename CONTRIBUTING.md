@@ -94,8 +94,8 @@ level.
 
 ## Release integrity
 
-Development, Stage, Production Reference, release tags, and stable images are
-bound to explicit source commits/digests. Do not bypass promotion checks or
-rebuild a release image from a tag after Stage approval.
+Development, Stage, main, release tags, and stable images are bound to explicit
+source commits/digests. Do not bypass promotion checks or rebuild a release
+image from a tag after Stage approval.
 
 See [docs/deployment.md](docs/deployment.md) for the release flow.

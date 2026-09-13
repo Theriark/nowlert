@@ -1,4 +1,4 @@
-"""Release metadata invariants for Nowlert CE v3.1.4."""
+"""Release metadata invariants for Nowlert CE v3.1.5."""
 
 import json
 from pathlib import Path
@@ -23,7 +23,7 @@ CURRENT_RELEASE_GUIDES = (
 
 
 def test_application_version_and_repository_are_current():
-    assert VERSION == "3.1.4"
+    assert VERSION == "3.1.5"
     assert EDITION == "Community Edition"
     assert EDITION_SLUG == "ce"
     assert REPOSITORY == "https://github.com/Theriark/nowlert-ce"
@@ -44,10 +44,10 @@ def test_public_enterprise_release_manifest_is_valid():
 def test_readme_release_metadata_is_current():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
-    assert "stable-v3.1.4-F4C542" in readme
-    assert "| **Current Stable Release** | **v3.1.4** |" in readme
+    assert "stable-v3.1.5-F4C542" in readme
+    assert "| **Current Stable Release** | **v3.1.5** |" in readme
     assert "https://github.com/Theriark/nowlert-ce/releases" in readme
-    assert "stable-v3.1.3-F4C542" not in readme
+    assert "stable-v3.1.4-F4C542" not in readme
 
 
 def test_changelog_preserves_release_history():
@@ -67,7 +67,7 @@ def test_changelog_preserves_release_history():
 
 
 def test_unchanged_runtime_guides_remain_on_v312_contract():
-    """v3.1.4 does not change the runtime contracts documented from v3.1.2."""
+    """v3.1.5 does not change the runtime contracts documented from v3.1.2."""
 
     for relative in CURRENT_RELEASE_GUIDES:
         document = (ROOT / relative).read_text(encoding="utf-8")
@@ -75,7 +75,7 @@ def test_unchanged_runtime_guides_remain_on_v312_contract():
         assert "Nowlert v3.1.1" not in document, relative
 
 
-def test_historical_v300_v310_v311_v312_and_v313_documents_remain_historical():
+def test_historical_v300_v310_v311_v312_v313_and_v314_documents_remain_historical():
     v300_notes = ROOT / "docs" / "releases" / "v3.0.0.md"
     v300_checklist = ROOT / "docs" / "v3.0.0-acceptance-checklist.md"
     v310_notes = ROOT / "docs" / "releases" / "v3.1.0.md"
@@ -85,6 +85,8 @@ def test_historical_v300_v310_v311_v312_and_v313_documents_remain_historical():
     v312_checklist = ROOT / "docs" / "v3.1.2-qa-checklist.md"
     v313_notes = ROOT / "docs" / "releases" / "v3.1.3.md"
     v313_checklist = ROOT / "docs" / "v3.1.3-qa-checklist.md"
+    v314_notes = ROOT / "docs" / "releases" / "v3.1.4.md"
+    v314_checklist = ROOT / "docs" / "v3.1.4-qa-checklist.md"
     docker_hub = (ROOT / "DOCKERHUB_README.md").read_text(encoding="utf-8")
 
     assert v300_notes.read_text(encoding="utf-8").startswith(
@@ -114,8 +116,14 @@ def test_historical_v300_v310_v311_v312_and_v313_documents_remain_historical():
     assert v313_checklist.read_text(encoding="utf-8").startswith(
         "# Nowlert CE v3.1.3 QA checklist"
     )
-    assert "current stable release is **v3.1.4**" in docker_hub.casefold()
-    assert "theriark/nowlert-ce:3.1.4" in docker_hub
+    assert v314_notes.read_text(encoding="utf-8").startswith(
+        "# Nowlert CE v3.1.4 release notes"
+    )
+    assert v314_checklist.read_text(encoding="utf-8").startswith(
+        "# Nowlert CE v3.1.4 QA checklist"
+    )
+    assert "current stable release is **v3.1.5**" in docker_hub.casefold()
+    assert "theriark/nowlert-ce:3.1.5" in docker_hub
 
 
 def test_historical_v255_release_identity_is_preserved():
@@ -138,22 +146,22 @@ def test_production_defaults_are_versioned_and_compatible():
     environment = (ROOT / ".env.example").read_text(encoding="utf-8")
     compose = (ROOT / "compose.production.yaml").read_text(encoding="utf-8")
 
-    assert "NOWLERT_IMAGE=theriark/nowlert-ce:3.1.4" in environment
-    assert "theriark/nowlert-ce:3.1.4" in compose
+    assert "NOWLERT_IMAGE=theriark/nowlert-ce:3.1.5" in environment
+    assert "theriark/nowlert-ce:3.1.5" in compose
     assert "NOWLERT_IMAGE" in compose
     assert "NOWLERT_EXTERNAL_BACKUP_DIR" in compose
     assert "/nowlert/external-backups" in compose
 
 
-def test_release_notes_cover_v314_compatibility_and_rollback():
-    notes = (ROOT / "docs" / "releases" / "v3.1.4.md").read_text(
+def test_release_notes_cover_v315_compatibility_and_rollback():
+    notes = (ROOT / "docs" / "releases" / "v3.1.5.md").read_text(
         encoding="utf-8"
     )
 
     for heading in (
         "## Highlights",
         "## Compatibility",
-        "## Upgrade from v3.1.3",
+        "## Upgrade from v3.1.4",
         "## Rollback",
     ):
         assert heading in notes

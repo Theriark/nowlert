@@ -29,16 +29,16 @@ FILES = (
     ROOT / "docs" / "platform-routing.md",
     ROOT / "docs" / "platform-state.md",
     ROOT / "docs" / "presentation-contract.md",
-    ROOT / "docs" / "releases" / "v3.1.4.md",
+    ROOT / "docs" / "releases" / "v3.1.5.md",
     ROOT / "docs" / "roadmap.md",
     ROOT / "docs" / "smtp-security.md",
-    ROOT / "docs" / "v3.1.4-qa-checklist.md",
+    ROOT / "docs" / "v3.1.5-qa-checklist.md",
     ROOT / "docs" / "webui.md",
 )
 
-# v3.1.4 intentionally does not change these runtime contracts. They continue
+# v3.1.5 intentionally does not change these runtime contracts. They continue
 # to document the v3.1.2 behavior baseline while the current release identity
-# and release-engineering documentation advance to v3.1.4.
+# and release-engineering documentation advance to v3.1.5.
 UNCHANGED_RUNTIME_GUIDES = (
     ROOT / "docs" / "current-configuration-model.md",
     ROOT / "docs" / "data-portability.md",
@@ -101,8 +101,8 @@ docs_index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
 webui = (ROOT / "docs" / "webui.md").read_text(encoding="utf-8")
 api = (ROOT / "docs" / "platform-api.md").read_text(encoding="utf-8")
 deployment = (ROOT / "docs" / "deployment.md").read_text(encoding="utf-8")
-release = (ROOT / "docs" / "releases" / "v3.1.4.md").read_text(encoding="utf-8")
-checklist = (ROOT / "docs" / "v3.1.4-qa-checklist.md").read_text(encoding="utf-8")
+release = (ROOT / "docs" / "releases" / "v3.1.5.md").read_text(encoding="utf-8")
+checklist = (ROOT / "docs" / "v3.1.5-qa-checklist.md").read_text(encoding="utf-8")
 version = (ROOT / "src" / "version.py").read_text(encoding="utf-8")
 environment = (ROOT / ".env.example").read_text(encoding="utf-8")
 compose = (ROOT / "compose.production.yaml").read_text(encoding="utf-8")
@@ -112,23 +112,23 @@ integration_index = (ROOT / "docs" / "integrations" / "README.md").read_text(
 )
 
 required_pairs = (
-    (readme, "stable-v3.1.4-F4C542"),
-    (readme, "**v3.1.4**"),
-    (dockerhub.casefold(), "current stable release is **v3.1.4**"),
-    (version, 'VERSION = "3.1.4"'),
-    (environment, "NOWLERT_IMAGE=theriark/nowlert-ce:3.1.4"),
-    (compose, "${NOWLERT_IMAGE:-theriark/nowlert-ce:3.1.4}"),
-    (release, "# Nowlert CE v3.1.4 release notes"),
-    (checklist, "# Nowlert CE v3.1.4 QA checklist"),
-    (deployment, 'version="v3.1.4"'),
-    (deployment, 'tag="v3.1.4"'),
-    (deployment, "ghcr.io/theriark/nowlert-ce:3.1.4"),
-    (deployment, "docker.io/theriark/nowlert-ce:3.1.4"),
+    (readme, "stable-v3.1.5-F4C542"),
+    (readme, "**v3.1.5**"),
+    (dockerhub.casefold(), "current stable release is **v3.1.5**"),
+    (version, 'VERSION = "3.1.5"'),
+    (environment, "NOWLERT_IMAGE=theriark/nowlert-ce:3.1.5"),
+    (compose, "${NOWLERT_IMAGE:-theriark/nowlert-ce:3.1.5}"),
+    (release, "# Nowlert CE v3.1.5 release notes"),
+    (checklist, "# Nowlert CE v3.1.5 QA checklist"),
+    (deployment, 'version="v3.1.5"'),
+    (deployment, 'tag="v3.1.5"'),
+    (deployment, "ghcr.io/theriark/nowlert-ce:3.1.5"),
+    (deployment, "docker.io/theriark/nowlert-ce:3.1.5"),
     (deployment, "Development -> Stage -> main -> Release"),
     (deployment, "docker-release.yml"),
     (api, "DELETE | `/api/v2/users/{id}`"),
     (api, "DELETE | `/api/v2/backups/{id}`"),
-    (docs_index, "current v3.1.4 release line"),
+    (docs_index, "current v3.1.5 release line"),
     (docs_index, "does not introduce a\nvisual redesign"),
     (guide_index, "xen-orchestra-to-discord.md"),
     (guide_index, "xen-orchestra-to-teams.md"),
@@ -154,15 +154,15 @@ for document in UNCHANGED_RUNTIME_GUIDES:
             f"ERROR: stale runtime guide identity remains in {relative}: Nowlert v3.1.1"
         )
 
-# Historical v3.1.3 release records are preserved, but mutable current-release
+# Historical v3.1.4 release records are preserved, but mutable current-release
 # surfaces must not continue to advertise the old release identity.
 for stale in (
-    "stable-v3.1.3-F4C542",
-    "| **Current Stable Release** | **v3.1.3** |",
-    'version="v3.1.3"',
-    'tag="v3.1.3"',
-    "ghcr.io/theriark/nowlert-ce:3.1.3",
-    "docker.io/theriark/nowlert-ce:3.1.3",
+    "stable-v3.1.4-F4C542",
+    "| **Current Stable Release** | **v3.1.4** |",
+    'version="v3.1.4"',
+    'tag="v3.1.4"',
+    "ghcr.io/theriark/nowlert-ce:3.1.4",
+    "docker.io/theriark/nowlert-ce:3.1.4",
 ):
     if stale in readme or stale in dockerhub or stale in deployment:
         raise SystemExit(f"ERROR: stale current-release reference remains: {stale}")

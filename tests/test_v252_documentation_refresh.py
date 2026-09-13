@@ -1,4 +1,4 @@
-"""Preserve historical v2.5.2 assets and validate current v3.1.4 docs."""
+"""Preserve historical v2.5.2 assets and validate current v3.1.5 docs."""
 
 from pathlib import Path
 
@@ -8,13 +8,13 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_stable_documentation_uses_v314_and_preserves_v252_assets():
+def test_stable_documentation_uses_v315_and_preserves_v252_assets():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     dockerhub = (ROOT / "DOCKERHUB_README.md").read_text(encoding="utf-8")
     webui = (ROOT / "docs" / "webui.md").read_text(encoding="utf-8")
 
-    assert "v3.1.4" in readme
-    assert "v3.1.4" in dockerhub
+    assert "v3.1.5" in readme
+    assert "v3.1.5" in dockerhub
 
     current_visual_baseline = (
         "v3.1.0-dashboard.png",
@@ -87,9 +87,9 @@ def test_current_docs_and_roadmap_exist():
         "docs/platform-api.md",
         "docs/platform-routing.md",
         "docs/platform-state.md",
-        "docs/releases/v3.1.4.md",
+        "docs/releases/v3.1.5.md",
         "docs/roadmap.md",
-        "docs/v3.1.4-qa-checklist.md",
+        "docs/v3.1.5-qa-checklist.md",
         "docs/webui.md",
     )
     for relative in required:

@@ -104,7 +104,7 @@ Create one issue per independently testable outcome. A useful issue defines:
 
 Release candidates must be cumulative on `development`. Stage approval moves the
 `stage` pointer to the exact promoted source commit. `main` is fast-forwarded to
-that same commit before Production Reference/release finalization.
+that same commit before release finalization.
 
 Completed historical issues remain closed; new compatibility findings should be
 tracked as new issues referencing the original work rather than reopening old

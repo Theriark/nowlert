@@ -2,16 +2,21 @@
 
 Nowlert CE uses one source commit and one immutable image digest through its
 release chain. Development builds the image once; Stage is the final runtime
-acceptance gate; `main` advances only to the Stage-approved source; release
-finalization publishes the approved digest under the stable GHCR/Docker Hub
-aliases and then creates the annotated tag, GitHub Release, and release
-evidence. No image rebuild occurs during promotion or finalization.
+acceptance gate; Finalize CE Release validates the Stage-approved candidate,
+fast-forwards `main`, publishes stable GHCR/Docker Hub aliases, and creates the
+annotated tag, GitHub Release, and release evidence. No image rebuild occurs
+during promotion or finalization.
 
 The release chain is:
 
 ```text
-Development -> Stage -> main -> Release
+Development -> Stage -> Finalize CE Release
+                              |-> main
+                              `-> stable aliases + tag + GitHub Release
 ```
+
+Stage promotion never updates `main`. Finalize CE Release owns the only
+Stage -> `main` promotion.
 
 ## Local development checkout
 
@@ -100,14 +105,16 @@ The release branches represent approved source state:
 |---|---|
 | `development` | cumulative active work; CI builds/deploys the Development candidate |
 | `stage` | exact source commit approved by the final runtime acceptance gate |
-| `main` | exact Stage-approved source after explicit fast-forward; required for release |
+| `main` | exact source of the last successfully finalized public release |
 
-The desired invariant before release finalization is:
+Before release finalization, the required invariant is:
 
 ```text
-development SHA == stage SHA == main SHA == image source SHA
+development SHA == stage SHA == image source SHA
 ```
 
+`main` may intentionally lag behind Stage until Finalize CE Release succeeds.
+After finalization, `main` equals the released Stage-approved source commit.
 The runtime image is additionally pinned by immutable digest.
 
 ## Development
@@ -116,6 +123,9 @@ A push to `development` runs Continuous Integration. After the CI test/build job
 passes, the same Continuous Integration workflow directly builds and publishes
 the Development candidate and deploys the resulting immutable digest to CE
 Development. There is no standalone Development Image workflow.
+
+Continuous Integration does not run for ordinary pushes to `main`; `main` is a
+release result, not another test environment.
 
 Record from the successful development Continuous Integration run:
 
@@ -142,11 +152,12 @@ The workflow:
 3. deploys the exact digest to Stage;
 4. runs a passive notification-silent live smoke;
 5. records desired state in the release ledger; and
-6. advances the `stage` branch to the approved source SHA using a guarded
+6. advances only the `stage` branch to the approved source SHA using a guarded
    fast-forward-only ref update with propagation-safe verification.
 
-No rebuild is performed. A successful Stage promotion is the final runtime
-acceptance decision for the candidate.
+Stage promotion never reads, advances, or otherwise modifies `main`. No rebuild
+is performed. A successful Stage promotion is the final runtime acceptance
+decision for the candidate.
 
 Example CLI:
 
@@ -165,47 +176,24 @@ After success, record:
 STAGE_PROMOTION_RUN_ID=<successful Promote CE to Stage run id>
 ```
 
-## Fast-forward `main`
-
-Release finalization is blocked until `main` and `stage` point to the same
-Stage-approved source commit.
-
-Verify Stage is strictly ahead/identical and fast-forward only:
-
-```bash
-SOURCE_COMMIT="$(gh api \
-  repos/Theriark/nowlert-ce/git/ref/heads/stage \
-  --jq '.object.sha')"
-
-MAIN_SHA="$(gh api \
-  repos/Theriark/nowlert-ce/git/ref/heads/main \
-  --jq '.object.sha')"
-
-gh api \
-  "repos/Theriark/nowlert-ce/compare/${MAIN_SHA}...${SOURCE_COMMIT}" \
-  --jq '{status,ahead_by,behind_by}'
-```
-
-Only when the compare result is a fast-forward-safe state, move `main` without
-force:
-
-```bash
-gh api --method PATCH \
-  repos/Theriark/nowlert-ce/git/refs/heads/main \
-  -f sha="$SOURCE_COMMIT" \
-  -F force=false
-```
-
-Re-read both refs and require equality before continuing.
+At this point stop. `main` must still represent the previous finalized release.
+Do not fast-forward `main` manually.
 
 ## Release finalization
 
-Release finalization runs once from `main` and completes the public CE release.
-It does not deploy or rebuild the image. The finalizer requires
-`source_commit == main == stage`, verifies the requested tag matches
-`src/version.py`, requires the matching release notes and QA checklist,
-verifies the immutable image is the Stage-approved runtime image, and validates
-the successful development Continuous Integration and Stage promotion evidence.
+Finalize CE Release is manually dispatched from the Stage-approved branch and
+completes the public CE release. It does not deploy or rebuild the application.
+The finalizer requires `source_commit == stage`, proves current `main` can
+fast-forward to that source without force, verifies the requested tag matches
+`src/version.py`, requires the matching release notes and QA checklist, verifies
+the immutable image is the Stage-approved runtime image, and validates the
+successful Development Continuous Integration and Stage promotion evidence.
+
+After all Stage/evidence checks pass, the finalizer advances `main` to the exact
+Stage-approved source with `force=false`, waits for ref propagation, and verifies
+the result. Only Finalize CE Release performs this Stage -> `main` promotion.
+Because normal CI is not triggered by pushes to `main`, this does not start a
+second redundant Continuous Integration run.
 
 Inputs include the source commit, final immutable image, development Continuous
 Integration run ID, Stage promotion run ID, and human-readable release notes.
@@ -215,7 +203,7 @@ Example for v3.1.6:
 ```bash
 gh workflow run finalize-release.yml \
   --repo Theriark/nowlert-ce \
-  --ref main \
+  --ref stage \
   -f version="v3.1.6" \
   -f final_image="$FINAL_IMAGE" \
   -f source_commit="$SOURCE_COMMIT" \
@@ -224,10 +212,11 @@ gh workflow run finalize-release.yml \
   -f release_notes="Nowlert CE v3.1.6 release automation consolidation"
 ```
 
-The workflow refuses an existing tag/release, verifies current `main` matches
-the Stage-approved source, verifies the live Stage digest and Stage ledger, and
-validates promotion evidence. It then publishes and verifies all four stable
-aliases from the already-approved immutable digest:
+The workflow refuses an existing tag/release, verifies current Stage matches the
+requested source, verifies the live Stage digest and Stage ledger, validates the
+promotion evidence, and verifies `main` is fast-forward-safe. It then advances
+`main` and publishes/verifies all four stable aliases from the already-approved
+immutable digest:
 
 ```text
 ghcr.io/theriark/nowlert-ce:3.1.6
@@ -272,9 +261,12 @@ gh run view "$RUN_ID" --repo Theriark/nowlert-ce --log-failed
 
 ### Before stable publication
 
-If Stage fails, stop the release. Do not move `main` or run Finalize CE Release.
-The Stage promotion workflow contains bounded rollback handling for failed live
-gates where a previous image is available.
+If Stage fails, stop the release. Do not move `main` and do not run Finalize CE
+Release. The Stage promotion workflow contains bounded rollback handling for
+failed live gates where a previous image is available.
+
+If Stage passes but release finalization has not started, `main` remains on the
+previous finalized release by design.
 
 ### After stable publication
 
@@ -300,4 +292,6 @@ Before finalization, verify all of the following describe the same candidate:
 - `CHANGELOG.md`;
 - current release notes/QA checklist;
 - screenshots; and
-- the Development/Stage/main source SHA and immutable digest.
+- the Development/Stage source SHA and immutable digest.
+
+After finalization, verify `main` equals that exact released source SHA.

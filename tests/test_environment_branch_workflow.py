@@ -21,7 +21,7 @@ def test_environment_branch_and_immutable_promotion_contract():
     ).read_text(encoding="utf-8")
 
     assert "- development" in ci
-    assert "- main" in ci
+    assert "- main" not in ci
 
     # A successful push CI on development must build, publish, and deploy the
     # Development image directly. There is no standalone Development workflow.
@@ -43,9 +43,12 @@ def test_environment_branch_and_immutable_promotion_contract():
     assert '"development": {"push"}' in finalizer
     assert '"development": "Development Image"' not in finalizer
 
+    # Stage promotion owns only the Stage branch. It must never write main.
     assert "contents: write" in stage
     assert "refs/heads/development" in stage
     assert "refs/heads/stage" in stage
+    assert "refs/heads/main" not in stage
+    assert "git/refs/heads/main" not in stage
     assert "force=false" in stage
     assert "force=true" not in stage
     assert "Waiting for stage ref propagation" in stage
@@ -53,14 +56,22 @@ def test_environment_branch_and_immutable_promotion_contract():
 
     assert not (ROOT / ".github" / "workflows" / "promote-production-reference.yml").exists()
 
+    # Finalize runs from the Stage-approved source, proves main can fast-forward,
+    # and owns the only Stage -> main branch update.
     assert "environment: stage" in finalization
     assert "contents: write" in finalization
     assert "packages: write" in finalization
-    assert "refs/heads/main" in finalization
+    assert '[[ "${GITHUB_REF}" == "refs/heads/stage" ]]' in finalization
+    assert "Release finalization must be launched from stage" in finalization
     assert "refs/remotes/origin/main" in finalization
     assert "refs/remotes/origin/stage" in finalization
-    assert "is not current main" in finalization
-    assert "does not match Stage-approved source" in finalization
+    assert '[[ "${SOURCE_COMMIT}" == "${STAGE_SHA}" ]]' in finalization
+    assert 'git merge-base --is-ancestor "${MAIN_SHA}" "${SOURCE_COMMIT}"' in finalization
+    assert "Advance main to Stage-approved source" in finalization
+    assert "git/refs/heads/main" in finalization
+    assert "Waiting for main ref propagation" in finalization
+    assert "-F force=false" in finalization
+    assert "-F force=true" not in finalization
     assert "production_reference_run_id" not in finalization
     assert "CE_PRODREF_APPLICATION_ID" not in finalization
     assert "CE_RELEASE_TOKEN" not in finalization

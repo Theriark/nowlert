@@ -70,15 +70,24 @@ def test_v316_consolidated_guide_batch_is_packaged():
 def test_v316_release_safety_contract():
     finalizer = (ROOT / ".github" / "workflows" / "finalize-release.yml").read_text(encoding="utf-8")
     stage = (ROOT / ".github" / "workflows" / "promote-stage.yml").read_text(encoding="utf-8")
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     assert '[[ "${VERSION}" == "v${SOURCE_VERSION}" ]]' in finalizer
     assert "Release tag ${VERSION} does not match source version" in finalizer
     assert 'docs/releases/${VERSION}.md' in finalizer
     assert 'docs/${VERSION}-qa-checklist.md' in finalizer
+    assert "Release finalization must be launched from stage" in finalizer
     assert "refs/remotes/origin/stage" in finalizer
-    assert "does not match Stage-approved source" in finalizer
+    assert '[[ "${SOURCE_COMMIT}" == "${STAGE_SHA}" ]]' in finalizer
+    assert "Advance main to Stage-approved source" in finalizer
+    assert "git/refs/heads/main" in finalizer
+    assert "-F force=false" in finalizer
+    assert "-F force=true" not in finalizer
+    assert "Waiting for main ref propagation" in finalizer
     assert "production_reference_run_id" not in finalizer
     assert "skopeo copy --all --preserve-digests" in finalizer
     assert "Verify all stable aliases use the approved digest" in finalizer
+    assert "      - main\n" not in ci
+    assert "refs/heads/main" not in stage
     assert "-F force=true" not in stage
     assert "-F force=false" in stage
     assert "Waiting for stage ref propagation" in stage
@@ -106,7 +115,10 @@ def test_v316_deployment_docs_contain_stage_final_promotion_chain():
     assert "promote-production-reference.yml" not in deployment
     assert "production reference" not in release.casefold()
     assert "production reference" not in checklist.casefold()
-    assert "development -> stage -> main -> release" in normalized
+    assert "development -> stage -> finalize ce release" in normalized
+    assert "stage promotion never updates `main`" in normalized
+    assert "finalize ce release owns the only stage -> `main` promotion" in normalized
+    assert '--ref stage' in deployment
     assert 'version="v3.1.6"' in deployment
     assert "ghcr.io/theriark/nowlert-ce:3.1.6" in deployment
     assert "docker.io/theriark/nowlert-ce:3.1.6" in deployment

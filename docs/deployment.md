@@ -3,8 +3,9 @@
 Nowlert CE uses one source commit and one immutable image digest through its
 release chain. Development builds the image once; Stage is the final runtime
 acceptance gate; `main` advances only to the Stage-approved source; release
-finalization tags that same source commit; stable registry aliases copy the
-approved digest without rebuilding.
+finalization publishes the approved digest under the stable GHCR/Docker Hub
+aliases and then creates the annotated tag, GitHub Release, and release
+evidence. No image rebuild occurs during promotion or finalization.
 
 The release chain is:
 
@@ -111,9 +112,11 @@ The runtime image is additionally pinned by immutable digest.
 
 ## Development
 
-A push to `development` runs CI. After the test job passes, the Development
-image workflow builds/publishes the candidate and deploys that exact digest to
-Development.
+A push to `development` runs Continuous Integration. If the CI test/build job
+passes, that same workflow automatically invokes **Development Image** for the
+exact `development` commit. Development Image builds/publishes the candidate
+and deploys the resulting immutable digest to CE Development. Manual dispatch
+of Development Image remains available for an operator re-run or recovery.
 
 Record from the successful Development run:
 
@@ -198,12 +201,12 @@ Re-read both refs and require equality before continuing.
 
 ## Release finalization
 
-Release finalization runs from `main` and creates the annotated version tag and
-GitHub Release on that exact commit. It does not deploy or rebuild the image.
-The finalizer requires `source_commit == main == stage`, verifies the requested
-tag matches `src/version.py`, requires the matching release notes and QA
-checklist, verifies the immutable image is the Stage-approved runtime image,
-and validates the successful Development and Stage workflow evidence.
+Release finalization runs once from `main` and completes the public CE release.
+It does not deploy or rebuild the image. The finalizer requires
+`source_commit == main == stage`, verifies the requested tag matches
+`src/version.py`, requires the matching release notes and QA checklist,
+verifies the immutable image is the Stage-approved runtime image, and validates
+the successful Development and Stage workflow evidence.
 
 Inputs include the source commit, final immutable image, Development run ID,
 Stage promotion run ID, and human-readable release notes.
@@ -223,23 +226,9 @@ gh workflow run finalize-release.yml \
 ```
 
 The workflow refuses an existing tag/release, verifies current `main` matches
-the Stage-approved source, verifies the live Stage digest and Stage ledger,
-validates promotion evidence, writes the release ledger record, creates the
-annotated tag/GitHub Release, and uploads release evidence.
-
-## Stable production image aliases
-
-After the release tag exists, run **Docker Release Aliases** from `main`:
-
-```bash
-gh workflow run docker-release.yml \
-  --repo Theriark/nowlert-ce \
-  --ref main \
-  -f tag="v3.1.5" \
-  -f final_image="$FINAL_IMAGE"
-```
-
-This workflow uses registry-copy tooling to publish:
+the Stage-approved source, verifies the live Stage digest and Stage ledger, and
+validates promotion evidence. It then publishes and verifies all four stable
+aliases from the already-approved immutable digest:
 
 ```text
 ghcr.io/theriark/nowlert-ce:3.1.5
@@ -248,8 +237,10 @@ docker.io/theriark/nowlert-ce:3.1.5
 docker.io/theriark/nowlert-ce:latest
 ```
 
-All aliases must resolve to the approved Stage digest. **No image rebuild is
-performed from the release tag.**
+Every alias must resolve to the approved Stage digest. After registry
+verification, the workflow creates the annotated tag and GitHub Release, writes
+the release ledger record, and uploads the release evidence. There is **no image
+rebuild** and no second Docker-alias workflow to run.
 
 For Community Edition this stable registry publication is the production
 release boundary. There is no additional CE Dokploy `Production` deployment
@@ -282,9 +273,9 @@ gh run view "$RUN_ID" --repo Theriark/nowlert-ce --log-failed
 
 ### Before stable publication
 
-If Stage fails, stop the release. Do not move `main`, create the release tag, or
-publish stable aliases. The Stage promotion workflow contains bounded rollback
-handling for failed live gates where a previous image is available.
+If Stage fails, stop the release. Do not move `main` or run Finalize CE Release.
+The Stage promotion workflow contains bounded rollback handling for failed live
+gates where a previous image is available.
 
 ### After stable publication
 

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version, for example v3.1.5"
+        description: "Release version, for example v3.1.6"
         required: true
         type: string
       final_image:
@@ -100,8 +100,8 @@ jobs:
             exit 1
           }
 
-          [[ "${GITHUB_REF}" == "refs/heads/main" ]] || {
-            echo "::error::Release finalization must be launched from main"
+          [[ "${GITHUB_REF}" == "refs/heads/stage" ]] || {
+            echo "::error::Release finalization must be launched from stage"
             exit 1
           }
 
@@ -112,15 +112,17 @@ jobs:
           MAIN_SHA="$(git rev-parse refs/remotes/origin/main)"
           STAGE_SHA="$(git rev-parse refs/remotes/origin/stage)"
 
-          [[ "${SOURCE_COMMIT}" == "${MAIN_SHA}" ]] || {
-            echo "::error::Release source ${SOURCE_COMMIT} is not current main ${MAIN_SHA}"
+          [[ "${SOURCE_COMMIT}" == "${STAGE_SHA}" ]] || {
+            echo "::error::Release source ${SOURCE_COMMIT} is not current Stage ${STAGE_SHA}"
             exit 1
           }
 
-          [[ "${SOURCE_COMMIT}" == "${STAGE_SHA}" ]] || {
-            echo "::error::main ${MAIN_SHA} does not match Stage-approved source ${STAGE_SHA}"
-            exit 1
-          }
+          if [[ "${MAIN_SHA}" != "${SOURCE_COMMIT}" ]]; then
+            git merge-base --is-ancestor "${MAIN_SHA}" "${SOURCE_COMMIT}" || {
+              echo "::error::main cannot fast-forward from ${MAIN_SHA} to Stage-approved source ${SOURCE_COMMIT}"
+              exit 1
+            }
+          fi
 
           SOURCE_VERSION="$(
             git show "${SOURCE_COMMIT}:src/version.py" |
@@ -203,6 +205,72 @@ jobs:
             --image "${FINAL_IMAGE}" \
             --source-commit "${SOURCE_COMMIT}" \
             --promotion-run "${STAGE_PROMOTION_RUN_ID}"
+
+      - name: Advance main to Stage-approved source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          CURRENT_MAIN_SHA="$(
+            gh api \
+              "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" \
+              --jq '.object.sha'
+          )"
+          CURRENT_STAGE_SHA="$(
+            gh api \
+              "repos/${GITHUB_REPOSITORY}/git/ref/heads/stage" \
+              --jq '.object.sha'
+          )"
+
+          [[ "${CURRENT_STAGE_SHA}" == "${SOURCE_COMMIT}" ]] || {
+            echo "::error::Stage moved during finalization: ${CURRENT_STAGE_SHA}, expected ${SOURCE_COMMIT}"
+            exit 1
+          }
+
+          if [[ "${CURRENT_MAIN_SHA}" != "${SOURCE_COMMIT}" ]]; then
+            COMPARE="$(
+              gh api \
+                "repos/${GITHUB_REPOSITORY}/compare/${CURRENT_MAIN_SHA}...${SOURCE_COMMIT}"
+            )"
+            STATUS="$(jq -r '.status' <<<"${COMPARE}")"
+            BEHIND_BY="$(jq -r '.behind_by' <<<"${COMPARE}")"
+
+            [[ "${BEHIND_BY}" == "0" && "${STATUS}" == "ahead" ]] || {
+              echo "::error::main cannot fast-forward from ${CURRENT_MAIN_SHA} to ${SOURCE_COMMIT} (status=${STATUS}, behind_by=${BEHIND_BY})"
+              exit 1
+            }
+
+            gh api --method PATCH \
+              "repos/${GITHUB_REPOSITORY}/git/refs/heads/main" \
+              -f sha="${SOURCE_COMMIT}" \
+              -F force=false \
+              >/dev/null
+          fi
+
+          MAIN_SHA=""
+          for attempt in {1..15}; do
+            MAIN_SHA="$(
+              gh api \
+                "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" \
+                --jq '.object.sha'
+            )"
+
+            if [[ "${MAIN_SHA}" == "${SOURCE_COMMIT}" ]]; then
+              break
+            fi
+
+            echo "Waiting for main ref propagation (${attempt}/15): ${MAIN_SHA}"
+            sleep 2
+          done
+
+          [[ "${MAIN_SHA}" == "${SOURCE_COMMIT}" ]] || {
+            echo "::error::main branch is ${MAIN_SHA}, expected ${SOURCE_COMMIT}"
+            exit 1
+          }
+
+          echo "Main branch now references Stage-approved source ${MAIN_SHA}"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4
@@ -379,6 +447,7 @@ jobs:
             echo "- Final image: \`${FINAL_IMAGE}\`"
             echo "- Development run: \`${DEVELOPMENT_RUN_ID}\`"
             echo "- Stage promotion run: \`${STAGE_PROMOTION_RUN_ID}\`"
+            echo "- Main branch: \`${SOURCE_COMMIT}\`"
             echo "- GHCR aliases: \`${RELEASE_VERSION}\`, \`latest\`"
             echo "- Docker Hub aliases: \`${RELEASE_VERSION}\`, \`latest\`"
             echo "- Notification delivery tests during Stage promotion: disabled"

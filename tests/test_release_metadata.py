@@ -186,6 +186,7 @@ def test_release_workflow_is_guarded_and_reuses_approved_image():
     stage = (ROOT / ".github" / "workflows" / "promote-stage.yml").read_text(
         encoding="utf-8"
     )
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 
     assert "final_image:" in finalization
     assert "skopeo copy --all --preserve-digests" in finalization
@@ -195,14 +196,21 @@ def test_release_workflow_is_guarded_and_reuses_approved_image():
 
     assert '--title "Nowlert CE ${VERSION}"' in finalization
     assert 'gh release create "${VERSION}"' in finalization
-    assert "Release finalization must be launched from main" in finalization
+    assert "Release finalization must be launched from stage" in finalization
     assert '[[ "${VERSION}" == "v${SOURCE_VERSION}" ]]' in finalization
     assert "Release tag ${VERSION} does not match source version" in finalization
     assert 'docs/releases/${VERSION}.md' in finalization
     assert 'docs/${VERSION}-qa-checklist.md' in finalization
     assert "refs/remotes/origin/stage" in finalization
+    assert '[[ "${SOURCE_COMMIT}" == "${STAGE_SHA}" ]]' in finalization
+    assert "Advance main to Stage-approved source" in finalization
+    assert "git/refs/heads/main" in finalization
+    assert "-F force=false" in finalization
+    assert "-F force=true" not in finalization
+    assert "Waiting for main ref propagation" in finalization
     assert "production_reference_run_id" not in finalization
 
+    assert "      - main\n" not in ci
     assert "-F force=false" in stage
     assert "-F force=true" not in stage
     assert "Waiting for stage ref propagation" in stage

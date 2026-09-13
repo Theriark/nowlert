@@ -29,10 +29,10 @@ FILES = (
     ROOT / "docs" / "platform-routing.md",
     ROOT / "docs" / "platform-state.md",
     ROOT / "docs" / "presentation-contract.md",
-    ROOT / "docs" / "releases" / "v3.1.5.md",
+    ROOT / "docs" / "releases" / "v3.1.6.md",
     ROOT / "docs" / "roadmap.md",
     ROOT / "docs" / "smtp-security.md",
-    ROOT / "docs" / "v3.1.5-qa-checklist.md",
+    ROOT / "docs" / "v3.1.6-qa-checklist.md",
     ROOT / "docs" / "webui.md",
 )
 
@@ -97,8 +97,8 @@ docs_index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
 webui = (ROOT / "docs" / "webui.md").read_text(encoding="utf-8")
 api = (ROOT / "docs" / "platform-api.md").read_text(encoding="utf-8")
 deployment = (ROOT / "docs" / "deployment.md").read_text(encoding="utf-8")
-release = (ROOT / "docs" / "releases" / "v3.1.5.md").read_text(encoding="utf-8")
-checklist = (ROOT / "docs" / "v3.1.5-qa-checklist.md").read_text(encoding="utf-8")
+release = (ROOT / "docs" / "releases" / "v3.1.6.md").read_text(encoding="utf-8")
+checklist = (ROOT / "docs" / "v3.1.6-qa-checklist.md").read_text(encoding="utf-8")
 version = (ROOT / "src" / "version.py").read_text(encoding="utf-8")
 environment = (ROOT / ".env.example").read_text(encoding="utf-8")
 compose = (ROOT / "compose.production.yaml").read_text(encoding="utf-8")
@@ -106,22 +106,22 @@ guide_index = (ROOT / "docs" / "guides" / "README.md").read_text(encoding="utf-8
 integration_index = (ROOT / "docs" / "integrations" / "README.md").read_text(encoding="utf-8")
 
 required_pairs = (
-    (readme, "stable-v3.1.5-F4C542"),
-    (readme, "**v3.1.5**"),
-    (dockerhub.casefold(), "current stable release is **v3.1.5**"),
-    (version, 'VERSION = "3.1.5"'),
-    (environment, "NOWLERT_IMAGE=theriark/nowlert-ce:3.1.5"),
-    (compose, "${NOWLERT_IMAGE:-theriark/nowlert-ce:3.1.5}"),
-    (release, "# Nowlert CE v3.1.5 release notes"),
-    (checklist, "# Nowlert CE v3.1.5 QA checklist"),
-    (deployment, 'version="v3.1.5"'),
-    (deployment, "ghcr.io/theriark/nowlert-ce:3.1.5"),
-    (deployment, "docker.io/theriark/nowlert-ce:3.1.5"),
+    (readme, "stable-v3.1.6-F4C542"),
+    (readme, "**v3.1.6**"),
+    (dockerhub.casefold(), "current stable release is **v3.1.6**"),
+    (version, 'VERSION = "3.1.6"'),
+    (environment, "NOWLERT_IMAGE=theriark/nowlert-ce:3.1.6"),
+    (compose, "${NOWLERT_IMAGE:-theriark/nowlert-ce:3.1.6}"),
+    (release, "# Nowlert CE v3.1.6 release notes"),
+    (checklist, "# Nowlert CE v3.1.6 QA checklist"),
+    (deployment, 'version="v3.1.6"'),
+    (deployment, "ghcr.io/theriark/nowlert-ce:3.1.6"),
+    (deployment, "docker.io/theriark/nowlert-ce:3.1.6"),
     (deployment, "Development -> Stage -> main -> Release"),
     (deployment, "no second Docker-alias workflow"),
     (api, "DELETE | `/api/v2/users/{id}`"),
     (api, "DELETE | `/api/v2/backups/{id}`"),
-    (docs_index, "current v3.1.5 release line"),
+    (docs_index, "current v3.1.6 release line"),
     (docs_index, "does not introduce a\nvisual redesign"),
     (guide_index, "xen-orchestra-to-discord.md"),
     (guide_index, "xen-orchestra-to-teams.md"),
@@ -147,11 +147,11 @@ for document in UNCHANGED_RUNTIME_GUIDES:
         raise SystemExit(f"ERROR: stale runtime guide identity remains in {relative}: Nowlert v3.1.1")
 
 for stale in (
-    "stable-v3.1.4-F4C542",
-    "| **Current Stable Release** | **v3.1.4** |",
-    'version="v3.1.4"',
-    "ghcr.io/theriark/nowlert-ce:3.1.4",
-    "docker.io/theriark/nowlert-ce:3.1.4",
+    "stable-v3.1.5-F4C542",
+    "| **Current Stable Release** | **v3.1.5** |",
+    'version="v3.1.5"',
+    "ghcr.io/theriark/nowlert-ce:3.1.5",
+    "docker.io/theriark/nowlert-ce:3.1.5",
 ):
     if stale in readme or stale in dockerhub or stale in deployment:
         raise SystemExit(f"ERROR: stale current-release reference remains: {stale}")

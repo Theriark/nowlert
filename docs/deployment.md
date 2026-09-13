@@ -86,7 +86,7 @@ Before an upgrade, keep a matched backup of:
 - the deployment definition; and
 - the currently running image reference/digest.
 
-v3.1.5 keeps schema 9, so upgrading from v3.1.4 does not require a database
+v3.1.6 keeps schema 9, so upgrading from v3.1.5 does not require a database
 migration. A matched backup is still required for safe rollback after state has
 changed.
 
@@ -156,7 +156,7 @@ gh workflow run promote-stage.yml \
   --ref development \
   -f ce_image="$FINAL_IMAGE" \
   -f source_commit="$SOURCE_COMMIT" \
-  -f change_reference="v3.1.5"
+  -f change_reference="v3.1.6"
 ```
 
 After success, record:
@@ -210,18 +210,18 @@ the successful development Continuous Integration and Stage promotion evidence.
 Inputs include the source commit, final immutable image, development Continuous
 Integration run ID, Stage promotion run ID, and human-readable release notes.
 
-Example for v3.1.5:
+Example for v3.1.6:
 
 ```bash
 gh workflow run finalize-release.yml \
   --repo Theriark/nowlert-ce \
   --ref main \
-  -f version="v3.1.5" \
+  -f version="v3.1.6" \
   -f final_image="$FINAL_IMAGE" \
   -f source_commit="$SOURCE_COMMIT" \
   -f development_run_id="$DEVELOPMENT_RUN_ID" \
   -f stage_promotion_run_id="$STAGE_PROMOTION_RUN_ID" \
-  -f release_notes="Nowlert CE v3.1.5 release automation cleanup"
+  -f release_notes="Nowlert CE v3.1.6 release automation consolidation"
 ```
 
 The workflow refuses an existing tag/release, verifies current `main` matches
@@ -230,9 +230,9 @@ validates promotion evidence. It then publishes and verifies all four stable
 aliases from the already-approved immutable digest:
 
 ```text
-ghcr.io/theriark/nowlert-ce:3.1.5
+ghcr.io/theriark/nowlert-ce:3.1.6
 ghcr.io/theriark/nowlert-ce:latest
-docker.io/theriark/nowlert-ce:3.1.5
+docker.io/theriark/nowlert-ce:3.1.6
 docker.io/theriark/nowlert-ce:latest
 ```
 

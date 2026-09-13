@@ -2,7 +2,7 @@ name: nowlert-ce
 
 services:
   nowlert-ce:
-    image: "${NOWLERT_IMAGE:-theriark/nowlert-ce:3.1.5}"
+    image: "${NOWLERT_IMAGE:-theriark/nowlert-ce:3.1.6}"
     container_name: nowlert-ce
     restart: unless-stopped
     init: true

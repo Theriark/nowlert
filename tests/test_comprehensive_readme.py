@@ -34,8 +34,8 @@ def test_readme_remains_comprehensive_and_current():
         assert heading in readme
 
     for value in (
-        "stable-v3.1.5-F4C542",
-        "| **Current Stable Release** | **v3.1.5** |",
+        "stable-v3.1.6-F4C542",
+        "| **Current Stable Release** | **v3.1.6** |",
         "v3.1.0-dashboard.png",
         "v3.1.0-routing-flow.png",
         "v3.1.0-destinations.png",
@@ -53,6 +53,8 @@ def test_readme_remains_comprehensive_and_current():
     ):
         assert value in readme
 
+    assert "stable-v3.1.5-F4C542" not in readme
+    assert "| **Current Stable Release** | **v3.1.5** |" not in readme
     assert "stable-v3.1.4-F4C542" not in readme
     assert "| **Current Stable Release** | **v3.1.4** |" not in readme
     assert "stable-v3.1.3-F4C542" not in readme
